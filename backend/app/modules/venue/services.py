@@ -1695,6 +1695,11 @@ class ArrangementForRecord:
     status: BookingRequestStatus
     #: Venue Staff's reason for their decision, if they gave one (SCRUM-43).
     decision_reason: str | None
+    #: The alternative suggested with a rejection, beside its reason (SCRUM-70 AC3):
+    #: the venue by name, and the period. Each is ``None`` when it wasn't suggested.
+    suggested_venue_name: str | None
+    suggested_starts_at: datetime | None
+    suggested_ends_at: datetime | None
     #: When an On Hold arrangement's hold expires, or an Expired one's did (SCRUM-93).
     hold_expires_at: datetime | None
     #: Flagged "Needs Alternative Venue": its venue became unavailable (SCRUM-92).
@@ -1729,6 +1734,9 @@ def _arrangement_for_record(
         reassessment_flags.append(
             ReassessmentForRecord(kind=reassessment.kind, reason=reassessment.reason)
         )
+    suggested_venue_name = None
+    if arrangement.suggested_venue_id is not None:
+        suggested_venue_name = get_venue(arrangement.suggested_venue_id, session=session).name
     return ArrangementForRecord(
         venue_name=venue.name,
         venue_location=venue.location,
@@ -1743,6 +1751,9 @@ def _arrangement_for_record(
         justification=arrangement.justification,
         status=arrangement.status,
         decision_reason=arrangement.decision_reason,
+        suggested_venue_name=suggested_venue_name,
+        suggested_starts_at=arrangement.suggested_starts_at,
+        suggested_ends_at=arrangement.suggested_ends_at,
         hold_expires_at=arrangement.hold_expires_at,
         needs_alternative_venue=arrangement.needs_alternative_venue,
         unavailability=unavailability,
