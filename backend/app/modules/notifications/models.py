@@ -137,6 +137,15 @@ class NotificationKind(str, enum.Enum):
     #: back to planning, are the notification's ``detail`` (SCRUM-111 AC2, ADR-0117).
     #: Migration 0054.
     SAFETY_REVIEW_VENUE_CANCELLED = "safety_review_venue_cancelled"
+    #: Tell the Organiser who submitted an event that its coordinator approved or
+    #: rejected their change request; any reason is the notification's ``detail``
+    #: (SCRUM-57 AC4, ADR-0127). Migration 0056.
+    CHANGE_REQUEST_APPROVED = "change_request_approved"
+    CHANGE_REQUEST_REJECTED = "change_request_rejected"
+    #: Tells each Attendee holding a place that an approved change request moved the
+    #: event's date or time; the new period is the notification's ``detail`` (SCRUM-57
+    #: AC7, ADR-0127). Migration 0056.
+    EVENT_RESCHEDULED = "event_rescheduled"
 
 
 class Notification(db.Model):  # type: ignore[name-defined]
