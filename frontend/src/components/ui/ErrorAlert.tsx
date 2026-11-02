@@ -41,14 +41,26 @@ export function ErrorAlert({ error, title }: ErrorAlertProps) {
   return <AlertBox message={errorMessageOf(error)} reasons={[]} title={title} />
 }
 
+interface RefusalAlertProps {
+  /** A query or mutation error. Nothing is shown while it is null. */
+  error: unknown
+  /** The one field whose messages the form shows itself, under its box, so they aren't listed. */
+  fieldOnTheForm?: string
+}
+
 /**
  * Shows the backend's message for a refusal whose `details` are reasons, such as the gaps
  * holding an event back, and lists every one under it in the backend's order (ADR-0075).
  */
-export function RefusalAlert({ error }: ErrorAlertProps) {
+export function RefusalAlert({ error, fieldOnTheForm }: RefusalAlertProps) {
   if (error === null || error === undefined) {
     return null
   }
-  const reasons = Object.values(fieldErrorsOf(error)).flat()
+  const reasons: string[] = []
+  for (const [field, messages] of Object.entries(fieldErrorsOf(error))) {
+    if (field !== fieldOnTheForm) {
+      reasons.push(...messages)
+    }
+  }
   return <AlertBox message={errorMessageOf(error)} reasons={reasons} />
 }

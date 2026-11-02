@@ -58,15 +58,18 @@ const PROJECTORS: EquipmentReservation = {
   preparation_notes: null,
 }
 
-/** As Omar, ask for the Summit to start at 10:00 for 300 people; answers the request's id. */
-async function omarAsksForALaterStart() {
+const LATER_AND_BIGGER = { start_time: '10:00', expected_attendance: 300 }
+
+/** As Omar, ask for this change to the Summit; answers the request's id. */
+async function omarAsksFor(change: object) {
   sendRequestsAs(mockTokenFor(MOCK_ACCOUNTS.organiser))
-  const raised = await raiseChangeRequest(PARTNER_SUMMIT, {
-    start_time: '10:00',
-    expected_attendance: 300,
-    reason: REASON,
-  })
+  const raised = await raiseChangeRequest(PARTNER_SUMMIT, { ...change, reason: REASON })
   return raised.id
+}
+
+/** As Omar, ask for the Summit to start at 10:00 for 300 people; answers the request's id. */
+function omarAsksForALaterStart() {
+  return omarAsksFor(LATER_AND_BIGGER)
 }
 
 function openAs(account: MockAccount, path: string) {
@@ -83,6 +86,17 @@ async function openDecisionPanel() {
 /** Chloe's Summit page, once Omar has asked for his change: answers the decision panel. */
 async function openForDecision() {
   await omarAsksForALaterStart()
+  return openDecisionPanel()
+}
+
+/** Chloe's panel on the approved Summit, once Omar asked for `change` and she then made `edit`. */
+async function openAfterAnEdit(change: object, edit: Parameters<typeof editEventRequest>[1]) {
+  // Approved first: before that, the coordinator can't edit it directly (SCRUM-110).
+  sendRequestsAs(mockTokenFor(CHLOE))
+  await decideEventRequest(PARTNER_SUMMIT, { outcome: 'approved' })
+  await omarAsksFor(change)
+  sendRequestsAs(mockTokenFor(CHLOE))
+  await editEventRequest(PARTNER_SUMMIT, edit)
   return openDecisionPanel()
 }
 
@@ -248,18 +262,22 @@ describe('SCRUM-57 AC2, AC3, AC6 deciding a change request', () => {
 
 describe('SCRUM-57 AC8, AC9 the refusals, as the backend words them', () => {
   it('says which field moved when a later edit overtook the request, and keeps it Pending', async () => {
-    // Approved first: before that, the coordinator can't edit it directly (SCRUM-110).
-    sendRequestsAs(mockTokenFor(CHLOE))
-    await decideEventRequest(PARTNER_SUMMIT, { outcome: 'approved' })
-    await omarAsksForALaterStart()
-    sendRequestsAs(mockTokenFor(CHLOE))
-    await editEventRequest(PARTNER_SUMMIT, { expected_attendance: 200 })
-    const { user } = openAs(CHLOE, coordinatorEventPath(PARTNER_SUMMIT))
-    const panel = within(await findRegion(DECIDE))
+    const { user, panel } = await openAfterAnEdit(LATER_AND_BIGGER, { expected_attendance: 200 })
 
     await user.click(panel.getByRole('button', { name: 'Approve' }))
 
     expect(await panel.findByRole('alert')).toHaveTextContent(STALE_MESSAGE)
+    expect(within(await findRegion('Change requests')).getByText('Pending')).toBeInTheDocument()
+  })
+
+  it("says why, in the backend's words, when a requested value no longer fits the event", async () => {
+    const { user, panel } = await openAfterAnEdit({ end_time: '12:00' }, { start_time: '13:00' })
+
+    await user.click(panel.getByRole('button', { name: 'Approve' }))
+
+    const alert = await panel.findByRole('alert')
+    expect(alert).toHaveTextContent('Invalid request.')
+    expect(within(alert).getByRole('listitem')).toHaveTextContent('Event must end after it starts.')
     expect(within(await findRegion('Change requests')).getByText('Pending')).toBeInTheDocument()
   })
 
