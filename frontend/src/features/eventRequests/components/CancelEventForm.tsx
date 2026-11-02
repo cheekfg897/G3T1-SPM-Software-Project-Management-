@@ -2,8 +2,10 @@ import { useState } from 'react'
 
 import { Button, ErrorAlert, TextAreaField } from '@/components/ui'
 import { fieldErrorsOf } from '@/lib/api'
+import { selectSessionUser, useAppSelector } from '@/store'
 
 import type { Cancellation, EventRecord } from '../api'
+import { canRequestChange, REQUEST_A_CHANGE_SECTION_ID } from '../changeRequest'
 import { useCancelEvent, useRegistrants } from '../hooks'
 
 import { ActionCard } from './ActionCard'
@@ -31,15 +33,17 @@ function attendeesTold(registeredCount: number): string {
 /**
  * Cancel the organiser's event, with a reason (SCRUM-61 AC1; ADR-0122). It takes effect at once
  * and can't be undone, so the page asks first, saying what is released and how many registered
- * attendees are told, as the backend counts them (Product Owner, 29 Oct). The reason is sent
- * only when one is typed; that one is needed is the backend's rule, and its message shows under
- * the box (as RejectEventForm does).
+ * attendees are told, as the backend counts them, and offers a change request instead, since a
+ * postponement is a change of date (Product Owner, 29 Oct). The reason is sent only when one is
+ * typed; that one is needed is the backend's rule, and its message shows under the box (as
+ * RejectEventForm does).
  */
 export function CancelEventForm({ record }: { record: EventRecord }) {
   const [reason, setReason] = useState('')
   const [isConfirming, setIsConfirming] = useState(false)
   const cancel = useCancelEvent(record.reference)
   const registrants = useRegistrants(record.reference)
+  const viewer = useAppSelector(selectSessionUser)
 
   function cancelTheEvent() {
     const cancellation: Cancellation = reason === '' ? {} : { reason }
@@ -69,6 +73,15 @@ export function CancelEventForm({ record }: { record: EventRecord }) {
             equipment returned.
             {registrants.isSuccess && ` ${attendeesTold(registrants.data.registered_count)}`}
           </p>
+          {canRequestChange(viewer, record) && (
+            <p className="text-ink">
+              Want to change the date instead?{' '}
+              <a href={`#${REQUEST_A_CHANGE_SECTION_ID}`} className="text-flare underline">
+                Request a change
+              </a>{' '}
+              rather than cancel.
+            </p>
+          )}
         </ConfirmStep>
       ) : (
         <Button variant="secondary" onClick={() => setIsConfirming(true)}>

@@ -1,6 +1,6 @@
 # ADR-0122: The Event Organiser cancels their event at once, with a reason, which releases its arrangements as a rejection during planning does
 
-- **Status:** Accepted; who cancels, that it takes effect at once, the reason, the statuses, what is released and who is told, and the confirmation naming what is released and how many attendees are told are the Product Owner's (SCRUM-61 as written on 29-31 Oct); everything else below is a default to review
+- **Status:** Accepted; who cancels, that it takes effect at once, the reason, the statuses, what is released and who is told, and the confirmation naming what is released and how many attendees are told, and offering a change request instead, are the Product Owner's (SCRUM-61 as written on 29-31 Oct); everything else below is a default to review
 - **Date:** 2026-10-31
 - **Story:** SCRUM-61 Cancel an event and release its arrangements (AC1-AC9)
 - **Extends:** [ADR-0093](0093-reject-an-event-during-planning.md) (releasing an event's arrangements), [ADR-0103](0103-tell-venue-staff-of-released-bookings.md) (telling Venue Staff of a released booking), [ADR-0029](0029-clarification-requests.md) (any organiser of the organisation acts on its requests), [ADR-0109](0109-attendee-event-page.md) (a cancelled event's page is read-only), [ADR-0118](0118-withdraw-a-held-arrangement-and-change-arrangements-only-while-planning.md) (arrangements change only while the event is planned), [ADR-0015](0015-in-app-notifications.md), [ADR-0031](0031-end-to-end-journey-through-the-test-client.md)
@@ -41,7 +41,7 @@ The story's "Already built" note says the release, the closing of equipment requ
 
 ### The web app and the mock
 14. **The action sits on the organiser's event page,** below the record's sections, from submitted to confirmed, and never on the coordinator's. "Cancel event" asks first: "This can't be undone. Its venue bookings and holds are released and its reserved equipment returned." and how many registered attendees are told, from the backend's registrant count; "Keep the event" closes it. **Default to review:** it names what kinds of thing are released, not each booking, so the page doesn't filter the arrangements itself. The reason is sent only when typed, so the backend's message shows under the box. The history shows "Event cancelled" with the reason.
-15. **Not built: "Want to change the date instead?"** The Product Owner asked the confirmation to offer a change request, but change requests are SCRUM-56's, not built yet. The link is a follow-up for SCRUM-56.
+15. **"Want to change the date instead?"** The confirmation offers a change request instead, as the Product Owner asked (29 Oct), since a postponement is a change of date: a "Request a change" link to SCRUM-56's form further down the same page (ADR-0126). It shows on the rule the page offers that form by, `canRequestChange` (the organiser, from Submitted to Confirmed), so it is never offered where a change request can't be raised; today that is wherever cancelling is. **Default to review:** the wording, and that it is a link within the page rather than the form opening inside the card.
 16. **The mock** answers the route in the backend's order of checks, with its messages, writes the history entry, withdraws or releases the arrangements and frees the venue and equipment mocks' stores, as its rejection does. It raises no notifications, as no mock route does.
 
 ### Concurrency
@@ -53,10 +53,9 @@ The story's "Already built" note says the release, the closing of equipment requ
 ## Consequences
 - An organiser can withdraw an event at any point before it runs, and every venue, hold and unit of equipment it held is free at once.
 - Cancelled is final: the FAQ's way back is a new request, and every action on the event refuses it.
-- Tests: `tests/events/test_cancel_event.py`, `test_cancel_event_attendees.py`, `test_cancel_event_routes.py`, `test_cancel_event_change_request.py`, `test_cancelled_event_is_locked.py`, `test_event_cancelled_migration.py`, `tests/registration/test_registered_attendee_ids.py`, `tests/notifications/test_event_cancelled_notification_kinds.py` and the journey `tests/e2e/test_cancel_event_journey.py` (marker `scrum_61`); in the web app `CancelEventForm.test.tsx`, `eventCancellation.test.ts` for the mock, the history wording, and `cancelEvent.int.test.ts` against the backend.
+- Tests: `tests/events/test_cancel_event.py`, `test_cancel_event_attendees.py`, `test_cancel_event_routes.py`, `test_cancel_event_change_request.py`, `test_cancelled_event_is_locked.py`, `test_event_cancelled_migration.py`, `tests/registration/test_registered_attendee_ids.py`, `tests/notifications/test_event_cancelled_notification_kinds.py` and the journey `tests/e2e/test_cancel_event_journey.py` (marker `scrum_61`); in the web app `CancelEventForm.test.tsx`, `changeRequest.test.ts` for who is offered a change request, `eventCancellation.test.ts` for the mock, the history wording, and `cancelEvent.int.test.ts` against the backend.
 
 ## Revisit when
-- The confirmation should link "change the date instead" to SCRUM-56's change request (decision 15).
 - The team wants the reason given to Attendees, or their places withdrawn (decision 10).
 - Only the submitting organiser should cancel (decision 1).
 - SCRUM-62 (draft PR #166) lands: its AC3 also tells Attendees of a cancelled event, through `notify_users_after_commit`. The Attendee notice here should then be sent through that helper, keeping one `event_cancelled` notice per Attendee (decision 10).

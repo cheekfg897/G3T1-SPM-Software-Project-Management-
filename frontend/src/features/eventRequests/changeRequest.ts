@@ -1,6 +1,8 @@
 import { EVENT_REQUEST_STATUS } from '@/config/eventStatus'
 import type { EventRequestStatus } from '@/config/eventStatus'
+import { ROLE } from '@/config/roles'
 import { formText } from '@/features/auth/formText'
+import type { SessionUser } from '@/store'
 
 import type { ChangeRequestDetails, ChangeRequestStatus, EventRecord, RequestedChange } from './api'
 import { differingFields } from './eventEdit'
@@ -25,6 +27,23 @@ export const CHANGE_REQUESTABLE_STATUSES: readonly EventRequestStatus[] = [
   EVENT_REQUEST_STATUS.SAFETY_REVIEW,
   EVENT_REQUEST_STATUS.CONFIRMED,
 ]
+
+/**
+ * Where the organiser's change request form sits on the event's page, for the cancel
+ * confirmation to link to it (SCRUM-61, ADR-0122).
+ */
+export const REQUEST_A_CHANGE_SECTION_ID = 'request-a-change'
+
+/**
+ * Whether `viewer` is offered a change request on `record`: its organiser, in the statuses the
+ * backend takes one in (SCRUM-56 AC1, AC6). The page offers the form, and the cancel
+ * confirmation offers it instead of cancelling, on this one rule.
+ */
+export function canRequestChange(viewer: SessionUser | null, record: EventRecord): boolean {
+  return (
+    viewer?.role === ROLE.EVENT_ORGANISER && CHANGE_REQUESTABLE_STATUSES.includes(record.status)
+  )
+}
 
 /** What a change request can ask for: the date, times, size, requirements and programme (AC2). */
 const REQUESTABLE_FIELDS = [

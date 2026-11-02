@@ -115,6 +115,17 @@ describe('SCRUM-61 cancelling an event from its page', () => {
     expect(statusShownFor(SUBMITTED)).toBe('Submitted')
   })
 
+  it('offers a change request instead, linking to the form further down the page', async () => {
+    await startCancelling(SUBMITTED)
+
+    const card = await findRegion(CARD)
+    expect(card).toHaveTextContent('Want to change the date instead?')
+    const link = within(card).getByRole('link', { name: 'Request a change' })
+    const form = await findRegion('Request a change')
+    expect(form.id).not.toBe('')
+    expect(link).toHaveAttribute('href', `#${form.id}`)
+  })
+
   it('says how many registered attendees are told, as the backend counts them', async () => {
     const { user } = openAsSara(CONFIRMED_WITH_ATTENDEES)
     await user.click(await screen.findByRole('button', { name: 'Cancel event' }))

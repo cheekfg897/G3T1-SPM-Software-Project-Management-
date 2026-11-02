@@ -9,7 +9,7 @@ import { selectSessionUser, useAppSelector } from '@/store'
 
 import { isRecordEquipmentLine } from '../api'
 import type { EventRecord } from '../api'
-import { CHANGE_REQUESTABLE_STATUSES } from '../changeRequest'
+import { canRequestChange, REQUEST_A_CHANGE_SECTION_ID } from '../changeRequest'
 import { useAnswerClarification } from '../hooks'
 
 import { AboutTheEvent } from './AboutTheEvent'
@@ -99,8 +99,7 @@ export function EventRecordView({ record }: { record: EventRecord }) {
   const isOrganiser = viewer?.role === ROLE.EVENT_ORGANISER
   const isAnswerNeeded =
     isOrganiser && record.status === EVENT_REQUEST_STATUS.AWAITING_CLARIFICATION
-  // Offered only in the statuses the backend takes a change request in (SCRUM-56 AC1, AC6).
-  const isChangeRequestable = isOrganiser && CHANGE_REQUESTABLE_STATUSES.includes(record.status)
+  const isChangeRequestable = canRequestChange(viewer, record)
   const mayCancel = isOrganiser && CANCELLABLE_STATUSES.includes(record.status)
   // Only the organiser's record names each line's equipment and sends the rest of the record:
   // everything on it, at every stage (ADR-0104). The coordinator works on the lines and the
@@ -161,7 +160,7 @@ export function EventRecordView({ record }: { record: EventRecord }) {
         </RecordSection>
       )}
       {isChangeRequestable && (
-        <RecordSection title="Request a change">
+        <RecordSection title="Request a change" id={REQUEST_A_CHANGE_SECTION_ID}>
           <RequestChangeForm record={record} />
         </RecordSection>
       )}
