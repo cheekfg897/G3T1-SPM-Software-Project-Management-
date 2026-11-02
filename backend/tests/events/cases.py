@@ -149,8 +149,13 @@ LOST_REASSIGNMENT_NOTIFICATION_CASES = [
 LEAD_ID = 11
 
 #: Venue arrangements that no longer count towards their event: withdrawn by the
-#: coordinator (SCRUM-93), or released when a replacement was approved (SCRUM-92 AC7).
-RETIRED_ARRANGEMENT_STATUSES = [BookingRequestStatus.WITHDRAWN, BookingRequestStatus.RELEASED]
+#: coordinator (SCRUM-93), released when a replacement was approved (SCRUM-92 AC7), or
+#: cancelled by the coordinator after Venue Staff approved it (SCRUM-111 AC1).
+RETIRED_ARRANGEMENT_STATUSES = [
+    BookingRequestStatus.WITHDRAWN,
+    BookingRequestStatus.RELEASED,
+    BookingRequestStatus.CANCELLED,
+]
 #: Every other arrangement status, built from the enum so a status added later is
 #: checked too.
 ACTIVE_ARRANGEMENT_STATUSES = [
@@ -192,6 +197,9 @@ def arrangement_for_record(**overrides: Any) -> ArrangementForRecord:
         "justification": None,
         "status": BookingRequestStatus.APPROVED,
         "decision_reason": None,
+        "suggested_venue_name": None,
+        "suggested_starts_at": None,
+        "suggested_ends_at": None,
         "hold_expires_at": None,
         "needs_alternative_venue": False,
         "unavailability": [],
