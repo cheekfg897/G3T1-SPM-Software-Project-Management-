@@ -238,6 +238,23 @@ def test_a_change_that_would_end_the_event_before_it_starts_is_refused(
     assert reload_event_request(saved_event_request.id).end_time.isoformat() == "17:00:00"
 
 
+def test_a_request_both_stale_and_no_longer_fitting_is_refused_as_stale(
+    raise_change: RaiseChange,
+    edit_event: EditEvent,
+    decide_change: DecideChange,
+) -> None:
+    """The stale refusal names what moved, which the values' own 400 wouldn't (AC8)."""
+    raised = raise_change(ORGANISER_ID, {"end_time": "12:00", "reason": REASON})
+    edit_event(COORDINATOR_ID, {"start_time": "13:00", "end_time": "18:00"})
+
+    with pytest.raises(ChangeRequestStaleError) as exc_info:
+        decide_change(COORDINATOR_ID, raised.id, APPROVE)
+
+    assert exc_info.value.message == _stale_message(
+        "End time: 17:00 when the change was requested, 18:00 now."
+    )
+
+
 #: The event is moved to 1 Oct; the change is decided on or after that day.
 MOVE_TO_1_OCTOBER = {"proposed_date": "2026-10-01", "reason": REASON}
 
