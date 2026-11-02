@@ -1,6 +1,11 @@
 import { fetchBookingRequests } from '@/features/booking/api'
 import { registerForEvent } from '@/features/catalogue/api'
-import { cancelEvent, fetchEventHistory, fetchEventRequest } from '@/features/eventRequests/api'
+import {
+  cancelEvent,
+  fetchEventHistory,
+  fetchEventRequest,
+  raiseChangeRequest,
+} from '@/features/eventRequests/api'
 import { fetchNotifications } from '@/features/notifications/api'
 import type { Notification } from '@/features/notifications/api'
 import { sendRequestsAs } from '@/test/sendRequestsAs'
@@ -20,8 +25,9 @@ import {
 /**
  * SCRUM-61 against the running backend: an Event Organiser cancels their event with a reason
  * (ADR-0122). It is cancelled at once and the history keeps who and why (AC1); its bookings are
- * released (AC2); the coordinator is told with the reason (AC1), each registered Attendee without
- * it (AC4) and Venue Staff of each booking released (AC8); the refusals say which.
+ * released (AC2); a Pending change request is withdrawn, saying why (SCRUM-56 AC9); the
+ * coordinator is told with the reason (AC1), each registered Attendee without it (AC4) and Venue
+ * Staff of each booking released (AC8); the refusals say which.
  *
  * The checks on a submitted event need only the staff account. The ones on an event with a
  * booking need a Lead and Venue Staff, and the one with an Attendee a Safety Officer too
@@ -94,6 +100,24 @@ describe('SCRUM-61 an organiser cancelling an event against the backend', () => 
     const [entry] = (await fetchEventHistory(reference)).history
     expect(entry).toMatchObject({ kind: 'event_cancelled', details: { reason: REASON } })
     expect(entry?.actor_name).toEqual(expect.any(String))
+  })
+
+  it('withdraws a Pending change request, saying the event was cancelled (SCRUM-56 AC9)', async () => {
+    const { reference } = await submittedEvent()
+    const raised = await raiseChangeRequest(reference, {
+      expected_attendance: 150,
+      reason: 'More partners said yes.',
+    })
+
+    await cancelEvent(reference, { reason: REASON })
+
+    const [withdrawn] = (await fetchEventRequest(reference)).change_requests
+    expect(withdrawn).toMatchObject({
+      id: raised.id,
+      status: 'withdrawn',
+      withdrawal_note: 'Withdrawn because the event was cancelled.',
+    })
+    expect(withdrawn?.withdrawn_at).toEqual(expect.any(String))
   })
 
   it('refuses to cancel it again, naming the status', async () => {
