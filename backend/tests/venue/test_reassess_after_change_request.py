@@ -4,8 +4,8 @@ When the coordinator approves a change request (SCRUM-57), each of the event's v
 bookings is checked again, by the same checks as the coordinator's direct edit
 (SCRUM-33 AC6, ADR-0094, ADR-0129):
 
-- AC1: a date or time change marks every booking Requires reconfirmation, and Venue
-  Staff are told.
+- AC1: a date or time change marks every Approved, Pending and Conflicting booking
+  Requires reconfirmation, and Venue Staff are told. A booking On Hold isn't one here.
 - AC2: attendance above a venue's capacity marks that booking No longer suitable.
 - AC3: the event can't go on while a booking is marked; Venue Staff resolve it
   (SCRUM-59).
@@ -33,7 +33,6 @@ from typing import Any
 import pytest
 from sqlalchemy.orm import Session
 
-from app.common.errors import AppError
 from app.modules.auth.models import User
 from app.modules.auth.permissions import Role
 from app.modules.events import services as event_services
@@ -434,6 +433,24 @@ def test_a_booking_still_asking_is_marked_and_one_turned_down_is_not(
     assert flags_on(db_session, turned_down.id) == []
 
 
+@pytest.mark.parametrize("status", [BookingRequestStatus.PENDING, BookingRequestStatus.CONFLICTING])
+def test_a_booking_venue_staff_havent_decided_is_marked_and_venue_staff_are_told(
+    db_session: Session, auditorium: Venue, event: EventRequest, status: BookingRequestStatus
+) -> None:
+    """AC1 names Approved, Pending and Conflicting; Approved is the tests above."""
+    waiting = raise_booking(auditorium, event, db_session)
+    waiting.status = status
+    db_session.commit()
+
+    _approve_change(db_session, event, MOVE_START)
+
+    assert flags_on(db_session, waiting.id) == [TIMING_FLAG]
+    assert reload_request(db_session, waiting.id).status is status
+    assert _venue_staff_notices() == [
+        (event.id, f"Venue arrangement {waiting.id} at Auditorium: {TIMING_REASON}")
+    ]
+
+
 @pytest.mark.parametrize(
     ("change", "breakout_flags"),
     [
@@ -453,7 +470,7 @@ def test_an_approved_change_leaves_a_booking_on_hold_unmarked_and_unannounced(
     breakout_flags: list[tuple[str, str]],
 ) -> None:
     """Saved straight as On Hold: a real hold needs an expiry before this past event."""
-    # Not reassessed (ADR-0129 decision 10). SCRUM-109 covers only the date or time.
+    # Out of this story (ADR-0129 decision 10). SCRUM-109 covers the date or time.
     held = raise_booking(auditorium, event, db_session)
     held.status = BookingRequestStatus.ON_HOLD
     db_session.commit()
@@ -952,7 +969,7 @@ def test_a_refused_stale_approval_marks_nothing(
     edit_event(db_session, event, {"expected_attendance": 70})
     passed_safety_check(EventRequestStatus.SAFETY_REVIEW)
 
-    with pytest.raises(AppError):
+    with pytest.raises(event_services.ChangeRequestStaleError):
         _decide_change(db_session, event, change_request_id, {"outcome": "approved"})
     db_session.rollback()
 
