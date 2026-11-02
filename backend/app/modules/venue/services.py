@@ -2359,7 +2359,7 @@ def _tell_of_replacement(approved: VenueBookingRequest, session: Session | None)
     available again before the replacement was approved: the original is released all
     the same, so the organiser hears of it (ADR-0111). The events module tells the
     organiser only if a venue sent the event back from Confirmed (ADR-0108); the
-    registration module tells every Attendee holding a place (SCRUM-62 AC6, ADR-0125).
+    registration module tells every Attendee holding a place (SCRUM-62 AC5, ADR-0125).
     """
     from app.modules.events import services as event_services  # circular at import time
     from app.modules.registration import (  # circular at import time

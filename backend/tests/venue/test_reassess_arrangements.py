@@ -66,7 +66,7 @@ RISE_REASON = (
 RECONFIRM = "requires_reconfirmation"
 #: The ``saved_users`` organiser who submitted the event.
 ORGANISER_ID = 7
-#: An Attendee holding a place at the event (SCRUM-62 AC6).
+#: An Attendee holding a place at the event (SCRUM-62 AC5).
 ATTENDEE_ID = 21
 #: The morning of the day after the event starts, clear of every booking it has.
 DAY_AFTER = {"starts_at": "2026-11-02T09:00:00+08:00", "ends_at": "2026-11-02T12:00:00+08:00"}
@@ -618,7 +618,7 @@ def test_a_change_flagged_replacement_tells_the_attendees_nothing(
     main_id: int,
     breakout_id: int,
 ) -> None:
-    """SCRUM-62 AC6 is about a venue that became unavailable (ADR-0125).
+    """SCRUM-62 AC5 is about a venue that became unavailable (ADR-0125).
 
     A change to the event is AC2's, which waits for SCRUM-57.
     """

@@ -20,8 +20,8 @@ import {
 } from './plannedEvent'
 
 /**
- * SCRUM-62 against the real backend (docs/adr/0125). AC4, AC5: registering and withdrawing tell
- * the Attendee and the event's Organiser. AC6: an Attendee holding a place is told when Venue
+ * SCRUM-62 against the real backend (docs/adr/0125). AC3, AC4: registering and withdrawing tell
+ * the Attendee and the event's Organiser. AC5: an Attendee holding a place is told when Venue
  * Staff approve a replacement for a venue that became unavailable (SCRUM-92). Registering needs
  * an event taken to Confirmed, which needs the Lead, Venue Staff and Safety Officer accounts CI
  * makes, so these checks skip without them. The web app shows each notice's message and detail
@@ -55,12 +55,12 @@ describe('SCRUM-62 registration notices against the backend', () => {
       await registerForEvent(event.id)
       await withdrawFromEvent(event.id)
 
-      // --- The attendee hears of their own registration (AC5) ---
+      // --- The attendee hears of their own registration (AC4) ---
       expect(await noticesAbout(event.reference)).toEqual([
         ['registration_withdrawn', 'Your registration for this event has been withdrawn.', null],
         ['registration_confirmed', 'Your registration for this event is confirmed.', null],
       ])
-      // --- The organiser who submitted it hears how many places are left (AC4) ---
+      // --- The organiser who submitted it hears how many places are left (AC3) ---
       // Its older notices are the planning's (assigned, approved, confirmed).
       await signInAs(event.organiser)
       const newestTwo = (await noticesAbout(event.reference)).slice(0, 2)
@@ -72,7 +72,7 @@ describe('SCRUM-62 registration notices against the backend', () => {
   )
 
   it.skipIf(!canRegister)(
-    'tells an attendee holding a place when a replacement venue is approved (AC6)',
+    'tells an attendee holding a place when a replacement venue is approved (AC5)',
     async () => {
       const event = await registrableEvent()
       const attendee = await signInAsNewAttendee()

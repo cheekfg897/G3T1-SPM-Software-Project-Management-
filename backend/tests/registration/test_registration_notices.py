@@ -1,7 +1,7 @@
 """Unit tests for SCRUM-62 "Be notified about changes, cancellations and registrations".
 
-AC4: the Event Organiser is told when an Attendee registers or withdraws, since either
-changes the places available. AC5: the Attendee is told when their own registration is
+AC3: the Event Organiser is told when an Attendee registers or withdraws, since either
+changes the places available. AC4: the Attendee is told when their own registration is
 confirmed or withdrawn. Only the Organiser who submitted the event and the Attendee
 themselves are told (SCRUM-28 AC2, ADR-0125). A refused registration or withdrawal
 tells nobody.
@@ -49,7 +49,7 @@ def _notices(session: Session) -> list[tuple[int, int, NotificationKind, str | N
 
 
 # --------------------------------------------------------------------------
-# AC5, AC4 — registering tells the attendee and the organiser
+# AC4, AC3 — registering tells the attendee and the organiser
 # --------------------------------------------------------------------------
 
 
@@ -111,7 +111,7 @@ def test_registering_again_after_withdrawing_tells_them_again(
 
 
 # --------------------------------------------------------------------------
-# AC5, AC4 — withdrawing tells the attendee and the organiser
+# AC4, AC3 — withdrawing tells the attendee and the organiser
 # --------------------------------------------------------------------------
 
 

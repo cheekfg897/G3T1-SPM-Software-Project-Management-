@@ -114,7 +114,7 @@ class NotificationKind(str, enum.Enum):
     #: to Approved that Venue Staff approved a replacement venue for it; the event, the
     #: venues and the category are the notification's ``detail`` (SCRUM-92 AC9,
     #: ADR-0108). Migration 0047. The event's registered Attendees get it too, with a
-    #: ``detail`` naming the event and both venues (SCRUM-62 AC6, ADR-0125).
+    #: ``detail`` naming the event and both venues (SCRUM-62 AC5, ADR-0125).
     REPLACEMENT_VENUE_APPROVED = "replacement_venue_approved"
     #: Tells the event's assigned coordinator that Venue Staff reconfirmed one of its
     #: arrangements after a change, or moved an undecided request to the new period; the
@@ -143,7 +143,7 @@ class NotificationKind(str, enum.Enum):
     REGISTRATION_CONFIRMED = "registration_confirmed"
     REGISTRATION_WITHDRAWN = "registration_withdrawn"
     #: Tells the Organiser who submitted an event that an Attendee registered or
-    #: withdrew; the places left are the notification's ``detail`` (SCRUM-62 AC4,
+    #: withdrew; the places left are the notification's ``detail`` (SCRUM-62 AC3,
     #: ADR-0125). Migration 0057.
     ATTENDEE_REGISTERED = "attendee_registered"
     ATTENDEE_WITHDRAWN = "attendee_withdrawn"

@@ -55,10 +55,10 @@ ALREADY_WITHDRAWN_MESSAGE = "You have already withdrawn from this event."
 WITHDRAWAL_CLOSED_MESSAGE = "Withdrawals for this event have closed."
 MY_EVENT_NOT_FOUND_MESSAGE = "Event not found."
 #: What the Organiser's notice of a place taken or given back says about the places
-#: (SCRUM-62 AC4, ADR-0125).
+#: (SCRUM-62 AC3, ADR-0125).
 PLACES_LEFT_DETAIL = "{places_left} of {capacity} places left."
 #: What an Attendee is told when a replacement venue is approved for their event
-#: (SCRUM-62 AC6, ADR-0125): the event and both venues.
+#: (SCRUM-62 AC5, ADR-0125): the event and both venues.
 REPLACEMENT_VENUE_DETAIL = (
     "{unavailable_venue} is no longer available for {event}. {replacement_venue} has been"
     " approved in its place."
@@ -387,7 +387,7 @@ def list_catalogue(
 
 
 # --------------------------------------------------------------------------
-# Telling people about their places (SCRUM-62 AC4, AC5, AC6)
+# Telling people about their places (SCRUM-62 AC3, AC4, AC5)
 # --------------------------------------------------------------------------
 
 
@@ -401,7 +401,7 @@ def _tell_of_place_change(
 
     After the registration's own commit (ADR-0015). Every place taken or given back
     changes the places available, so the Organiser who submitted the event hears of
-    each one (SCRUM-62 AC4, ADR-0125). A registration needs a capacity, so there always
+    each one (SCRUM-62 AC3, ADR-0125). A registration needs a capacity, so there always
     is one here (ADR-0043).
     """
     event = get_event_for_registration_notices(registration.event_request_id, session=session)
@@ -437,7 +437,7 @@ def notify_attendees_of_replacement_venue(
 ) -> None:
     """Tell everyone holding a place that a replacement venue was approved.
 
-    SCRUM-62 AC6. For the venue module, after the decision's commit (ADR-0015). Every
+    SCRUM-62 AC5. For the venue module, after the decision's commit (ADR-0015). Every
     Attendee who still holds a place is told, whether or not the venue sent the event
     back from Confirmed: either way they now go somewhere else (ADR-0125). The notice
     names the event and both venues, and nothing of its planning (SCRUM-21).

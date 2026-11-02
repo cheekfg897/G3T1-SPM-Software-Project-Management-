@@ -1,6 +1,6 @@
 """Unit tests for SCRUM-62's registration notification kinds and migration 0057.
 
-AC4: the Event Organiser is told when an Attendee registers or withdraws. AC5: the
+AC3: the Event Organiser is told when an Attendee registers or withdraws. AC4: the
 Attendee is told when their own registration is confirmed or withdrawn. Each has its own
 kind and message (ADR-0125). ``flask db check`` doesn't compare enum members, so the
 migration's value lists are checked against the model and the migration below it, and

@@ -10,7 +10,7 @@ its safety check, approving the replacement withdraws that approval, and an even
 Safety Review goes back to Approved to be sent again. AC9, AC10 (Product Owner, 26 Oct):
 when a replacement is approved for an event a venue sent back from Confirmed, the
 Organiser who submitted it is told, naming the event, both venues and the category.
-SCRUM-62 AC6: so is each Attendee who still holds a place at the event, naming the event
+SCRUM-62 AC5: so is each Attendee who still holds a place at the event, naming the event
 and both venues (ADR-0125).
 
 The services run against ``db_session``. The flagged arrangement is at the Auditorium,
@@ -82,11 +82,11 @@ ORGANISER_TOLD = (
     "Auditorium became unavailable for Partner Summit ({category}), and Breakout room has"
     " been approved in its place. The event still needs Safety Review and confirmation."
 )
-#: Two Attendees: one holds a place, the other withdrew (SCRUM-62 AC6).
+#: Two Attendees: one holds a place, the other withdrew (SCRUM-62 AC5).
 ATTENDEE = 21
 WITHDRAWN_ATTENDEE = 22
 #: What a registered Attendee is told: the event and both venues, and nothing of the
-#: event's planning (SCRUM-62 AC6, ADR-0125).
+#: event's planning (SCRUM-62 AC5, ADR-0125).
 ATTENDEE_TOLD = (
     "Auditorium is no longer available for Partner Summit. Breakout room has been approved"
     " in its place."
@@ -794,7 +794,7 @@ def test_approving_an_ordinary_request_tells_the_organiser_nothing(
 
 
 # --------------------------------------------------------------------------
-# SCRUM-62 AC6 — the event's registered Attendees hear of the approved replacement
+# SCRUM-62 AC5 — the event's registered Attendees hear of the approved replacement
 # --------------------------------------------------------------------------
 
 
@@ -821,7 +821,7 @@ def _hold_places(session: Session, event: EventRequest) -> None:
 def test_the_registered_attendees_are_told_after_the_organiser(
     db_session: Session, sent_back: Flagged
 ) -> None:
-    """Only a place still held counts: who withdrew isn't going (SCRUM-62 AC6)."""
+    """Only a place still held counts: who withdrew isn't going (SCRUM-62 AC5)."""
     _hold_places(db_session, sent_back.event)
     replacement = _replace(sent_back, db_session)
 

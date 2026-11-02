@@ -7,8 +7,8 @@ Create Date: 2026-10-31
 SCRUM-62 "Be notified about changes, cancellations and registrations" (ADR-0125):
 
 * ``notification_kind`` gains ``registration_confirmed`` and ``registration_withdrawn``,
-  raised to an Attendee about their own registration (AC5), and ``attendee_registered``
-  and ``attendee_withdrawn``, raised to the Organiser who submitted the event (AC4).
+  raised to an Attendee about their own registration (AC4), and ``attendee_registered``
+  and ``attendee_withdrawn``, raised to the Organiser who submitted the event (AC3).
 
 Revises 0055 (SCRUM-70), main's head when this was rebased, which changes no enum; 0054
 (SCRUM-111) is the last to change ``notification_kind``. Open pull requests #167
@@ -72,7 +72,7 @@ PREVIOUS_NOTIFICATION_KIND_VALUES = (
     "safety_review_venue_cancelled",
 )
 
-#: Added here (SCRUM-62 AC4, AC5, ADR-0125).
+#: Added here (SCRUM-62 AC3, AC4, ADR-0125).
 ADDED_NOTIFICATION_KIND_VALUES = (
     "registration_confirmed",
     "registration_withdrawn",
