@@ -140,14 +140,17 @@ LOST_NOTIFICATION_CASES = [
     pytest.param([None, None, LOST_CONNECTION], "request_assigned", id="the-organisers"),
 ]
 #: The same for a reassignment, which saves one more notice: the previous coordinator's
-#: comes last (SCRUM-96 AC5). Losing one still sends the other two.
+#: ``event_reassigned_away`` comes last (SCRUM-96 AC6, ADR-0130). Losing one still sends
+#: the other two.
 LOST_REASSIGNMENT_NOTIFICATION_CASES = [
     pytest.param(
         [None, LOST_CONNECTION, None, None], "coordinator_assigned", id="the-new-coordinators"
     ),
     pytest.param([None, None, LOST_CONNECTION, None], "request_assigned", id="the-organisers"),
     pytest.param(
-        [None, None, None, LOST_CONNECTION], "request_assigned", id="the-previous-coordinators"
+        [None, None, None, LOST_CONNECTION],
+        "event_reassigned_away",
+        id="the-previous-coordinators",
     ),
 ]
 
