@@ -1352,7 +1352,8 @@ def _lock_event_row(event_request: EventRequest, session: Session) -> EventReque
     """
     # FOR NO KEY UPDATE, because a plain FOR UPDATE also blocks the foreign key check of
     # another transaction's insert, which deadlocks with a venue action writing a
-    # history entry while it holds an arrangement this one is about to write (ADR-0127).
+    # history entry while it holds an arrangement this one is about to write. ADR-0127's
+    # consequences list the lock-order risk that remains.
     locked = (
         select(EventRequest)
         .where(EventRequest.id == event_request.id)
