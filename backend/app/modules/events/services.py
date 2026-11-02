@@ -6469,8 +6469,8 @@ def _record_decision(
     change_request.decision_reason = decision["reason"]
 
 
-def _period_in_words(event_request: EventRequest) -> str:
-    """The event's period as a notice says it, in business time (ADR-0002)."""
+def _rescheduled_detail(event_request: EventRequest) -> str:
+    """The Attendees' notice: the event's new period, in business time (ADR-0002)."""
     starts = f"{event_request.proposed_date.isoformat()} {event_request.start_time:%H:%M}"
     ends = f"{event_request.end_date.isoformat()} {event_request.end_time:%H:%M}"
     return EVENT_RESCHEDULED_DETAIL.format(event=event_request.name, starts=starts, ends=ends)
@@ -6491,7 +6491,7 @@ def _tell_attendees_of_new_period(event_request: EventRequest, session: Session)
         event_request,
         NotificationKind.EVENT_RESCHEDULED,
         session,
-        detail=_period_in_words(event_request),
+        detail=_rescheduled_detail(event_request),
     )
 
 
