@@ -137,6 +137,15 @@ class NotificationKind(str, enum.Enum):
     #: back to planning, are the notification's ``detail`` (SCRUM-111 AC2, ADR-0117).
     #: Migration 0054.
     SAFETY_REVIEW_VENUE_CANCELLED = "safety_review_venue_cancelled"
+    #: Tells an Attendee their own registration is confirmed or withdrawn (SCRUM-62
+    #: AC5, ADR-0125). Migration 0057.
+    REGISTRATION_CONFIRMED = "registration_confirmed"
+    REGISTRATION_WITHDRAWN = "registration_withdrawn"
+    #: Tells the Organiser who submitted an event that an Attendee registered or
+    #: withdrew; the places left are the notification's ``detail`` (SCRUM-62 AC4,
+    #: ADR-0125). Migration 0057.
+    ATTENDEE_REGISTERED = "attendee_registered"
+    ATTENDEE_WITHDRAWN = "attendee_withdrawn"
 
 
 class Notification(db.Model):  # type: ignore[name-defined]
