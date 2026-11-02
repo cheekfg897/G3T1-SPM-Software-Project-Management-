@@ -5,7 +5,8 @@ import {
 } from '@/features/notifications/api'
 import { sendRequestsAs } from '@/test/sendRequestsAs'
 
-import { refusal, signInAsNewAttendee } from './backend'
+import { refusal, signInAs, signInAsNewAttendee } from './backend'
+import { assignedEvent, LEAD } from './plannedEvent'
 
 /** An id no notification has, so marking it read is a 404. */
 const MISSING_NOTIFICATION_ID = 2_000_000_000
@@ -43,7 +44,30 @@ describe('SCRUM-28 notifications against the backend', () => {
     expect(error.status).toBe(404)
   })
 
+  it.skipIf(LEAD === null)(
+    "lists the organiser's assignment notice with a link to the event, and marks it read",
+    async () => {
+      const event = await assignedEvent()
+      await signInAs(event.organiser)
+
+      const [notice] = await fetchNotifications()
+
+      expect(notice).toMatchObject({
+        kind: 'request_assigned',
+        message: 'An Event Coordinator has been assigned to your event request.',
+        event_reference: event.reference,
+        event_name: event.name,
+        link: `/events/${event.reference}`,
+        read_at: null,
+        detail: null,
+      })
+      const marked = await markNotificationRead(notice?.id ?? MISSING_NOTIFICATION_ID)
+      expect(marked.read_at).not.toBeNull()
+      await expect(fetchUnreadCount()).resolves.toBe(0)
+    },
+  )
+
   it.todo(
-    'lists a real notification newest first and marks it read (needs a staff action to raise one)',
+    'sends the coordinator an event was reassigned away from event_reassigned_away with a null link (needs a second Event Coordinator account to reassign to; the mock and the backend unit tests cover it, ADR-0130)',
   )
 })
