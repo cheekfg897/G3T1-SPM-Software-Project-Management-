@@ -19,8 +19,10 @@ SCRUM-57 "Review and decide a change request" (ADR-0127):
 Revises 0055 (SCRUM-70), which adds no notification kind, so the previous kinds below
 are what 0054 left. The kinds are added outside the migration's transaction, with
 ``IF NOT EXISTS``, as 0049 does. Downgrading deletes the rows of the new kinds,
-rebuilds ``notification_kind`` without them (lossy, like 0049's), and drops the
-checks, the foreign key and the columns.
+rebuilds ``notification_kind`` without them (lossy, like 0049's), deletes every decided
+change request, and drops the checks, the foreign key and the columns. Those requests
+are lost too: nothing below 0056 can show who decided them, and left in place they would
+fail the checks when the upgrade adds them again.
 """
 
 from __future__ import annotations
@@ -132,6 +134,9 @@ def downgrade() -> None:
     )
     op.execute(sa.text("DROP TYPE notification_kind_old"))
 
+    op.execute(
+        sa.text("DELETE FROM event_change_requests WHERE status IN ('approved', 'rejected')")
+    )
     op.drop_constraint(REJECTED_HAS_REASON_CHECK, "event_change_requests", type_="check")
     op.drop_constraint(DECIDED_HAS_TIME_CHECK, "event_change_requests", type_="check")
     op.drop_constraint(DECIDED_BY_FOREIGN_KEY, "event_change_requests", type_="foreignkey")
