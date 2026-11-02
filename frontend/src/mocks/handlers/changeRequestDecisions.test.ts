@@ -7,7 +7,7 @@ import {
   raiseChangeRequest,
   withdrawChangeRequest,
 } from '@/features/eventRequests/api'
-import type { ChangeRequest, DecisionChoice } from '@/features/eventRequests/api'
+import type { ChangeRequest, DecisionChoice, EventRequest } from '@/features/eventRequests/api'
 import { apiRequest } from '@/lib/api'
 import { refusal } from '@/test/refusal'
 import { sendRequestsAs } from '@/test/sendRequestsAs'
@@ -28,6 +28,8 @@ import { addChangeRequest } from './changeRequestStore'
 
 /** Omar's, under review and coordinated by Chloe: 12 Nov, 9:00 am to 5:00 pm, 250 expected. */
 const PARTNER_SUMMIT = 'EVR-7K2M9QXA'
+/** Also Chloe's, so only the event in the path can tell its requests from the Summit's. */
+const CHLOES_OTHER_EVENT = 'EVR-B6YF2K8V'
 /** Hana's, approved, and in Safety Review ready to confirm. */
 const APPROVED_WITH_GAPS = 'EVR-PLAN0001'
 const READY_TO_CONFIRM = 'EVR-PLAN0003'
@@ -41,6 +43,36 @@ const LATER_AND_BIGGER = {
 const APPROVE: DecisionChoice = { outcome: 'approved' }
 const PENDING_MESSAGE =
   'The organiser has a change request waiting for your decision. Decide the change request first.'
+const HANA = MOCK_ACCOUNTS.planningCoordinator
+/** Hana's, approved and settled; nothing the mock starts with is both hers and rejected. */
+const REJECTED_BY_HANA = 'EVR-PLAN0002'
+/** The event's own decisions AC9 holds up, and the status each leaves it in when it goes ahead. */
+const EVENT_DECISIONS = [
+  {
+    action: 'approving or rejecting it',
+    coordinator: CHLOE,
+    reference: PARTNER_SUMMIT,
+    route: 'decide',
+    body: { outcome: 'approved' },
+    statusAfter: 'approved',
+  },
+  {
+    action: 'rejecting it in planning',
+    coordinator: HANA,
+    reference: APPROVED_WITH_GAPS,
+    route: 'reject',
+    body: { reason: 'Out of budget.' },
+    statusAfter: 'rejected',
+  },
+  {
+    action: 'confirming it',
+    coordinator: HANA,
+    reference: READY_TO_CONFIRM,
+    route: 'confirm',
+    body: undefined,
+    statusAfter: 'confirmed',
+  },
+]
 
 function signInAs(account: MockAccount) {
   sendRequestsAs(mockTokenFor(account))
@@ -83,6 +115,22 @@ function keptOn(reference: string, kept: Partial<ChangeRequest> = {}): number {
   return id
 }
 
+/** The stale refusal, naming this one field as the backend words it. */
+function staleMessage(fieldThenAndNow: string): string {
+  return (
+    "This change request can't be approved because the event has changed since it was " +
+    `raised. ${fieldThenAndNow} Reject it, and the organiser can raise a new one.`
+  )
+}
+
+/** POST one of the event's own decisions, as the coordinator signed in. */
+function postDecision(reference: string, route: string, body: object | undefined) {
+  return apiRequest<EventRequest>(`/api/events/requests/${reference}/${route}`, {
+    method: 'POST',
+    body,
+  })
+}
+
 describe('SCRUM-57 mock of approving a change request', () => {
   it('applies each value, records it as the coordinator, and keeps who decided it', async () => {
     const id = await raisedOnTheSummit()
@@ -120,14 +168,36 @@ describe('SCRUM-57 mock of approving a change request', () => {
     expect(refused).toMatchObject({
       status: 409,
       code: 'change_request_stale',
-      message:
-        "This change request can't be approved because the event has changed since it was " +
-        'raised. Expected attendance: 250 when the change was requested, 200 now. Reject it, ' +
-        'and the organiser can raise a new one.',
+      message: staleMessage('Expected attendance: 250 when the change was requested, 200 now.'),
     })
     const record = await fetchEventRequest(PARTNER_SUMMIT)
     expect(record.change_requests[0]?.status).toBe('pending')
     expect(record.start_time).toBe('09:00:00')
+  })
+
+  it.each([
+    {
+      said: 'a time to the minute',
+      asked: { start_time: '10:00' },
+      edit: { start_time: '08:30' },
+      fieldThenAndNow: 'Start time: 09:00 when the change was requested, 08:30 now.',
+    },
+    {
+      said: 'a field with no value as blank',
+      asked: { programme_notes: 'Keynote at two.' },
+      edit: { programme_notes: '' },
+      fieldThenAndNow:
+        'Programme notes: Keynote at 9:30, breakout rooms after lunch. when the change was ' +
+        'requested, blank now.',
+    },
+  ])('says $said in the stale refusal', async ({ asked, edit, fieldThenAndNow }) => {
+    await summitApproved()
+    const id = await raisedOnTheSummit({ ...asked, reason: 'Plans have changed.' })
+    await editEventRequest(PARTNER_SUMMIT, edit)
+
+    const refused = await refusal(decideChangeRequest(PARTNER_SUMMIT, id, APPROVE))
+
+    expect(refused).toMatchObject({ status: 409, message: staleMessage(fieldThenAndNow) })
   })
 
   it('refuses a value that would end the event before it starts, on its field', async () => {
@@ -164,6 +234,37 @@ describe('SCRUM-57 mock of approving a change request', () => {
       fieldErrors: { proposed_date: ['Proposed date cannot be in the past.'] },
     })
   })
+})
+
+describe('SCRUM-57 mock of a change request on an event that is over', () => {
+  beforeEach(async () => {
+    signInAs(HANA)
+    await postDecision(REJECTED_BY_HANA, 'reject', { reason: 'Out of budget.' })
+  })
+
+  it.each([
+    { status: 'completed', reference: 'EVR-PLAN0007' },
+    { status: 'cancelled', reference: 'EVR-PLAN0008' },
+    { status: 'rejected', reference: REJECTED_BY_HANA },
+  ])(
+    'refuses to apply it to a $status event, and it can still be rejected',
+    async ({ status, reference }) => {
+      const id = keptOn(reference)
+
+      const refused = await refusal(decideChangeRequest(reference, id, APPROVE))
+      const rejected = await decideChangeRequest(reference, id, {
+        outcome: 'rejected',
+        reason: 'The event is over.',
+      })
+
+      expect(refused).toMatchObject({
+        status: 409,
+        code: 'change_request_not_allowed',
+        message: `A change can't be applied to a ${status} event. Reject the change request instead.`,
+      })
+      expect(rejected.status).toBe('rejected')
+    },
+  )
 })
 
 describe('SCRUM-57 mock of rejecting a change request', () => {
@@ -217,6 +318,21 @@ describe("SCRUM-57 mock's refusals", () => {
     expect(refused).toMatchObject({ status: 404, code: 'not_found' })
   })
 
+  it("answers not found for the id of another event's request, leaving it Pending", async () => {
+    const decoy = keptOn(CHLOES_OTHER_EVENT)
+    signInAs(CHLOE)
+
+    const refused = await refusal(decideChangeRequest(PARTNER_SUMMIT, decoy, APPROVE))
+
+    expect(refused).toMatchObject({
+      status: 404,
+      code: 'not_found',
+      message: 'Change request not found.',
+    })
+    const record = await fetchEventRequest(CHLOES_OTHER_EVENT)
+    expect(record.change_requests[0]?.status).toBe('pending')
+  })
+
   it('answers not found to a coordinator the event is not assigned to, leaving it Pending', async () => {
     const id = await raisedOnTheSummit()
     signInAs(MOCK_ACCOUNTS.freshCoordinator)
@@ -244,19 +360,11 @@ describe("SCRUM-57 mock's refusals", () => {
 })
 
 describe("SCRUM-57 AC9 mock of the event's decisions waiting for a Pending change request", () => {
-  const HANA = MOCK_ACCOUNTS.planningCoordinator
-
-  it.each([
-    ['approving or rejecting it', CHLOE, PARTNER_SUMMIT, 'decide', { outcome: 'approved' }],
-    ['rejecting it in planning', HANA, APPROVED_WITH_GAPS, 'reject', { reason: 'Out of budget.' }],
-    ['confirming it', HANA, READY_TO_CONFIRM, 'confirm', undefined],
-  ])('refuses %s', async (_action, coordinator, reference, action, body) => {
+  it.each(EVENT_DECISIONS)('refuses $action', async ({ coordinator, reference, route, body }) => {
     keptOn(reference)
     signInAs(coordinator)
 
-    const refused = await refusal(
-      apiRequest(`/api/events/requests/${reference}/${action}`, { method: 'POST', body }),
-    )
+    const refused = await refusal(postDecision(reference, route, body))
 
     expect(refused).toMatchObject({
       status: 409,
@@ -264,4 +372,21 @@ describe("SCRUM-57 AC9 mock of the event's decisions waiting for a Pending chang
       message: PENDING_MESSAGE,
     })
   })
+
+  describe.each(['approved', 'rejected', 'withdrawn'] as const)(
+    'with the only request %s',
+    (status) => {
+      it.each(EVENT_DECISIONS)(
+        'goes ahead with $action',
+        async ({ coordinator, reference, route, body, statusAfter }) => {
+          keptOn(reference, { status })
+          signInAs(coordinator)
+
+          const decided = await postDecision(reference, route, body)
+
+          expect(decided.status).toBe(statusAfter)
+        },
+      )
+    },
+  )
 })
