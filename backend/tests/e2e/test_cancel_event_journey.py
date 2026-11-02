@@ -1,19 +1,20 @@
 """SCRUM-61 AC9: an Organiser cancels an event, which frees its venue and equipment.
 
 An approved event has the Main Hall booked by Venue Staff and four projectors reserved
-by Technical Support, so another event the same morning finds neither. Its Event
-Organiser cancels it with a reason: at once it is Cancelled, the booking is Released
-and the hall turns up in a venue search for that period again, and the projectors are
-free for the other event. The coordinator is told with the reason and Venue Staff of the
-released booking, the organiser sees the cancellation in the history, and cancelling
-again is refused. Every call goes through the real routes with Flask's test client
-(ADR-0031); the events are saved directly, as the other journeys save theirs, because
-getting one approved is SCRUM-41's journey.
+by Technical Support, so another event the same morning finds neither, and its
+organiser has a change request waiting. The organiser cancels it with a reason: at once
+it is Cancelled, the booking is Released and the hall turns up in a venue search for
+that period again, the projectors are free for the other event, and the change request
+is withdrawn. The coordinator is told with the reason and Venue Staff of the released
+booking, the organiser sees the cancellation in the history, and cancelling again is
+refused. Every call goes through the real routes with Flask's test client (ADR-0031);
+the events are saved directly, as the other journeys save theirs, because getting one
+approved is SCRUM-41's journey.
 
 The criteria it exercises: SCRUM-61 AC1 (cancelled straight away, the coordinator
 notified), AC2 (the booking released, the venue available again), AC3 (the equipment
-back in the available quantity), AC8 (Venue Staff told) and AC9. Moved here from
-SCRUM-63 (ADR-0122).
+back in the available quantity), AC8 (Venue Staff told) and AC9, with SCRUM-56 AC9
+(a Pending change request withdrawn). Moved here from SCRUM-63 (ADR-0122).
 """
 
 from __future__ import annotations
@@ -58,7 +59,10 @@ MAIN_HALL = {
 PROJECTORS = {"name": "Projector", "total_quantity": 10, "store_name": "Central AV store"}
 REASON = "Our keynote speaker has withdrawn."
 BOOKINGS_PATH = f"/api/venues/events/{EVENT}/booking-requests"
-CANCEL_PATH = f"/api/events/requests/{EVENT}/cancel"
+RECORD_PATH = f"/api/events/requests/{EVENT}"
+CANCEL_PATH = f"{RECORD_PATH}/cancel"
+#: A change the organiser asks for before deciding to cancel instead (SCRUM-56).
+MORE_ATTENDEES = {"expected_attendance": 300, "reason": "More partners said yes."}
 
 
 def _body(response: TestResponse, expected_status: int) -> Any:
@@ -193,6 +197,10 @@ def test_an_organiser_cancels_and_the_venue_and_equipment_are_free_again(
     _body(technical_support.post(f"/api/equipment/events/{EVENT}/reservations", reservation), 201)
     assert _free_projectors(technical_support) == 6
 
+    # --- The organiser has asked for a change, which waits for the coordinator ---
+    change_request = _body(organiser.post(f"{RECORD_PATH}/change-requests", MORE_ATTENDEES), 201)
+    assert change_request["status"] == "pending"
+
     # --- The organiser cancels it with a reason, straight away (AC1) ---
     cancelled = _body(organiser.post(CANCEL_PATH, {"reason": REASON}), 200)
     assert (cancelled["reference"], cancelled["status"]) == (EVENT, "cancelled")
@@ -204,6 +212,14 @@ def test_an_organiser_cancels_and_the_venue_and_equipment_are_free_again(
 
     # --- The projectors are back in the available quantity (AC3) ---
     assert _free_projectors(technical_support) == 10
+
+    # --- The waiting change request is withdrawn, saying why (SCRUM-56 AC9) ---
+    [withdrawn] = _body(organiser.get(RECORD_PATH), 200)["change_requests"]
+    assert (withdrawn["id"], withdrawn["status"], withdrawn["withdrawal_note"]) == (
+        change_request["id"],
+        "withdrawn",
+        "Withdrawn because the event was cancelled.",
+    )
 
     # --- The coordinator is told why (AC1), and Venue Staff of the booking (AC8) ---
     assert _latest_notification(coordinator) == ("event_cancelled", REASON)
