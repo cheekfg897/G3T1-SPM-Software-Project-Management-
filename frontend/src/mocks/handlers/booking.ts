@@ -24,7 +24,6 @@ import { accountForRequest } from './auth'
 import {
   MOCK_ARRANGEMENTS,
   MOCK_BOOKING_EVENTS,
-  MOCK_BOOKING_VENUES,
   MOCK_FLAGGED_DRIFTS,
   MOCK_PENDING_DECISIONS,
   MOCK_SAFETY_APPROVED_EVENT_IDS,
@@ -52,6 +51,13 @@ import {
 } from './preparationRules'
 import { FLAGGABLE_STATUSES, reassessmentFlagsFor } from './reassessmentRules'
 import type { SignificantChange } from './reassessmentRules'
+import {
+  NO_SUGGESTION,
+  suggestedVenueName,
+  suggestionIn,
+  suggestionRuleErrors,
+  suggestionShapeErrors,
+} from './suggestionRules'
 import { instantOf } from './venueBlockRules'
 import { unknownFieldErrors } from './venueRules'
 import { currentMockVenues } from './venues'
@@ -191,7 +197,6 @@ const UNAVAILABILITY_FLAGGABLE_STATUSES: readonly BookingRequestStatus[] = [
 const CHANGEABLE_FIELDS = ['purpose', 'expected_occupancy', 'required_layout', 'justification']
 const LAYOUT_ERROR_MESSAGE = `Must be one of: ${LAYOUT_OPTIONS.map((option) => option.value).join(', ')}.`
 
-const venues = Object.values(MOCK_BOOKING_VENUES)
 /** Copies of the events, so a cancellation that sends one back to approved never leaks out. */
 let events: MockBookingEvent[] = []
 /** The events whose safety check the Safety Officer approved, until a cancellation withdraws it. */
@@ -199,6 +204,14 @@ let safetyApprovedEventIds: number[] = []
 let requests: BookingRequest[] = []
 /** What changed under each arrangement since its period was set, by its id (SCRUM-59). */
 let drifts = new Map<number, Drift>()
+
+/**
+ * A venue of the catalogue, as the backend reads it for a request: any venue may be asked for,
+ * such as one Venue Staff suggested instead of another (SCRUM-70).
+ */
+function venueById(venueId: number) {
+  return currentMockVenues().find((venue) => venue.id === venueId)
+}
 
 /**
  * Forget the requests raised since, and put back the waiting ones and the decided
@@ -462,6 +475,7 @@ function toRequest(event: MockBookingEvent, body: Record<string, unknown>, id: n
     required_layout: body.required_layout ?? null,
     justification: body.justification ?? null,
     status: 'pending',
+    ...NO_SUGGESTION,
     preparation_status: 'not_started',
     preparation_notes: null,
     hold_expires_at: null,
@@ -516,7 +530,7 @@ function findOwnEvent(reference: unknown, coordinatorId: number): MockBookingEve
 
 /** The mock's suitability check: the venue must hold the request's own occupancy. */
 function needsJustification(candidate: BookingRequest): boolean {
-  const venue = venues.find((existing) => existing.id === candidate.venue_id)
+  const venue = venueById(candidate.venue_id)
   const tooSmall = venue !== undefined && candidate.expected_occupancy > venue.capacity
   return tooSmall && candidate.justification === null
 }
@@ -594,6 +608,9 @@ function arrangementInFull(arrangement: BookingRequest) {
     justification: arrangement.justification,
     status: arrangement.status,
     decision_reason: arrangement.decision_reason,
+    suggested_venue_name: suggestedVenueName(arrangement),
+    suggested_starts_at: arrangement.suggested_starts_at,
+    suggested_ends_at: arrangement.suggested_ends_at,
     hold_expires_at: arrangement.hold_expires_at,
     needs_alternative_venue: arrangement.needs_alternative_venue,
     unavailability: arrangement.unavailability,
@@ -634,7 +651,7 @@ export function flagArrangementsAfterChange(reference: string, change: Significa
     }
     // The backend reads every change since the period was set back from the history (SCRUM-59).
     drifts.set(existing.id, driftAfter(drifts.get(existing.id), change))
-    const venueCapacity = venues.find((venue) => venue.id === existing.venue_id)?.capacity ?? 0
+    const venueCapacity = venueById(existing.venue_id)?.capacity ?? 0
     const size = { expectedOccupancy: existing.expected_occupancy, venueCapacity }
     const flags = reassessmentFlagsFor(size, change)
     if (flags.length === 0) {
@@ -811,6 +828,15 @@ function eventToChange(reference: unknown, coordinatorId: number): MockBookingEv
   return event
 }
 
+/**
+ * Whether the request replaces an arrangement whose venue became unavailable, so must keep its
+ * period (SCRUM-92 AC6, ADR-0108), as the backend's `_keeps_its_period` says (SCRUM-70).
+ */
+function keepsItsPeriod(waiting: BookingRequest): boolean {
+  const replaced = requests.find((existing) => existing.id === waiting.replaces_request_id)
+  return replaced?.needs_alternative_venue === true
+}
+
 function withdrawRefusal(arrangement: BookingRequest) {
   return errorResponse(
     409,
@@ -935,7 +961,7 @@ function reconfirmRefusal(booking: BookingRequest, moved: BookingRequest, reason
   if (Object.keys(outside).length > 0) {
     return validationError(outside)
   }
-  const capacity = venues.find((venue) => venue.id === booking.venue_id)?.capacity ?? 0
+  const capacity = venueById(booking.venue_id)?.capacity ?? 0
   if (moved.expected_occupancy > capacity && reason === null) {
     return validationError({ reason: [capacityReasonMessage(capacity, moved.expected_occupancy)] })
   }
@@ -1009,8 +1035,7 @@ export const bookingHandlers: RequestHandler[] = [
     }
 
     const created = toRequest(event, body, requests.length + 1)
-    const venue = venues.find((candidate) => candidate.id === created.venue_id)
-    if (venue === undefined) {
+    if (venueById(created.venue_id) === undefined) {
       return validationError({ venue_id: ['Venue not found.'] })
     }
     if (needsJustification(created)) {
@@ -1055,9 +1080,22 @@ export const bookingHandlers: RequestHandler[] = [
     if (body.outcome !== 'approved' && body.outcome !== 'rejected') {
       return validationError({ outcome: [OUTCOME_ERROR_MESSAGE] })
     }
+    const badShape = suggestionShapeErrors(body)
+    if (Object.keys(badShape).length > 0) {
+      return validationError(badShape)
+    }
     const reason = typeof body.reason === 'string' ? body.reason : null
     if (body.outcome === 'rejected' && reason === null) {
       return validationError({ reason: [REJECTION_REASON_REQUIRED_MESSAGE] })
+    }
+    const suggestion = suggestionIn(body)
+    const refusedSuggestion = suggestionRuleErrors(
+      suggestion,
+      body.outcome,
+      keepsItsPeriod(waiting),
+    )
+    if (Object.keys(refusedSuggestion).length > 0) {
+      return validationError(refusedSuggestion)
     }
 
     // Final approval turns a hold into the booking, so it has nothing to clash with (SCRUM-75).
@@ -1070,6 +1108,7 @@ export const bookingHandlers: RequestHandler[] = [
 
     moveTo(waiting, body.outcome)
     waiting.decision_reason = reason
+    Object.assign(waiting, suggestion)
     if (body.outcome === 'approved') {
       markClashingRequestsConflicting(waiting)
       releaseReplaced(waiting)
