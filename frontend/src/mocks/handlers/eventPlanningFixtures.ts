@@ -23,6 +23,12 @@ export interface MockArrangement {
   reassessmentFlags: readonly ReassessmentFlag[]
   /** The attendance before the first change since it was arranged; unset until one comes. */
   attendanceWhenArranged?: number
+  /**
+   * For an arrangement not booked within its event, both periods as the gates name them
+   * (`list_arrangements_outside_event`, SCRUM-109). The mock keeps no periods, so a fixture
+   * sets this, never a change to the event's date or time.
+   */
+  outsideEvent?: { bookedFor: string; eventPeriod: string }
 }
 
 /** A hall booked for all of an event's 150 guests, in a venue for 200; nothing flagged yet. */
@@ -106,6 +112,9 @@ const DETAILS = {
  * for it; EVR-PLAN0006's organiser did, and nothing is set yet.
  * Over: EVR-PLAN0007 is completed and EVR-PLAN0008 cancelled, so every status after the first
  * decision has an event of hers.
+ * Booked on the wrong date (SCRUM-109): EVR-PLAN0009 is approved and EVR-PLAN0010 in Safety
+ * Review with the Safety Officer's approval, and each one's only arrangement is approved for
+ * the day before the event, so neither gate lets it through.
  */
 export const PLANNING_EVENT_REQUESTS: readonly MockEventRequest[] = [
   {
@@ -243,6 +252,87 @@ export const PLANNING_EVENT_REQUESTS: readonly MockEventRequest[] = [
       proposed_date: '2026-11-07',
       end_date: '2026-11-07',
       created_at: '2026-09-14T03:00:00+00:00',
+    },
+  },
+  {
+    ...HANAS_EVENT,
+    planning: {
+      ...NOTHING_PLANNED,
+      arrangements: [
+        {
+          id: 60,
+          venueId: 2,
+          status: 'approved',
+          ...HALL,
+          outsideEvent: {
+            bookedFor: '2026-11-19 10:00 to 2026-11-19 16:00',
+            eventPeriod: '2026-11-20 10:00 to 2026-11-20 16:00',
+          },
+        },
+        // Withdrawn, so the gates ignore it though it is outside the event too.
+        {
+          id: 62,
+          venueId: 3,
+          status: 'withdrawn',
+          ...BREAKOUT_ROOM,
+          outsideEvent: {
+            bookedFor: '2026-11-21 09:00 to 2026-11-21 12:00',
+            eventPeriod: '2026-11-20 10:00 to 2026-11-20 16:00',
+          },
+        },
+        // Pending and outside the event, so it is named for both reasons.
+        {
+          id: 63,
+          venueId: 3,
+          status: 'pending',
+          ...BREAKOUT_ROOM,
+          outsideEvent: {
+            bookedFor: '2026-11-21 13:00 to 2026-11-21 15:00',
+            eventPeriod: '2026-11-20 10:00 to 2026-11-20 16:00',
+          },
+        },
+      ],
+    },
+    request: {
+      ...DETAILS,
+      reference: 'EVR-PLAN0009',
+      status: 'approved',
+      name: 'Garden Lantern Market',
+      proposed_date: '2026-11-20',
+      end_date: '2026-11-20',
+      created_at: '2026-09-13T03:00:00+00:00',
+    },
+  },
+  {
+    ...HANAS_EVENT,
+    planning: {
+      ...NOTHING_PLANNED,
+      arrangements: [
+        // Flagged by the date change that left it outside the event: named for both reasons.
+        {
+          id: 61,
+          venueId: 3,
+          status: 'approved',
+          ...BREAKOUT_ROOM,
+          reassessmentFlags: [
+            { kind: 'requires_reconfirmation', reason: "The event's date or time changed." },
+          ],
+          outsideEvent: {
+            bookedFor: '2026-11-26 09:00 to 2026-11-26 12:00',
+            eventPeriod: '2026-11-27 10:00 to 2026-11-27 16:00',
+          },
+        },
+      ],
+      isSafetyApproved: true,
+    },
+    request: {
+      ...DETAILS,
+      reference: 'EVR-PLAN0010',
+      status: 'safety_review',
+      name: 'Makers Weekend Showcase',
+      proposed_date: '2026-11-27',
+      end_date: '2026-11-27',
+      created_at: '2026-09-12T03:00:00+00:00',
     },
   },
 ]
