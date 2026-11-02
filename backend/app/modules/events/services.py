@@ -6561,7 +6561,9 @@ def decide_change_request(
         )
         # TODO: SCRUM-58 reassesses each of the event's venue bookings against
         # ``changes`` here, before the commit, as update_event_request does with
-        # _flag_venue_arrangements and withdraw_safety_approval.
+        # _flag_venue_arrangements and withdraw_safety_approval. It also tells the
+        # Safety Officers of a change to an event in Safety Review, once the decision is
+        # saved, as an edit does with _tell_safety_officers_of_change (SCRUM-33 AC9).
     _record_decision(change_request, int(coordinator_id), decision)
     sess.commit()
 

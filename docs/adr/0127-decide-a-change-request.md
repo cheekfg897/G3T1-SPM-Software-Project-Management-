@@ -25,7 +25,7 @@ SCRUM-56 lets the Organiser of a submitted event ask for a change to its details
 ## Consequences
 - Migration 0056 adds the decision's columns and checks, and the three notification kinds.
 - A coordinator who edits a field after the Organiser asked to change it has to reject the request; the Organiser raises a new one against the edited event.
-- Until SCRUM-58, approving a change of date or attendance leaves the venue bookings as they were, unflagged, and a safety approval in place.
+- Until SCRUM-58, approving a change of date or attendance leaves the venue bookings as they were, unflagged, and a safety approval in place, and the Safety Officers aren't told of a change to an event in Safety Review, as they are after an edit.
 
 ## Revisit when
 - SCRUM-58 reassesses the venue bookings after an approved change.
