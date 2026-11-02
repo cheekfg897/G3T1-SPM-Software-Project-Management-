@@ -10,7 +10,7 @@ Two questions SCRUM-57 raises aren't settled by its criteria or comments, and we
 
 The first is what an approved change to the equipment requirements does. The Organiser's change request carries `equipment_requirements`, the event's free-text field. Since SCRUM-37 the coordinator also keeps equipment lines (a type and a quantity) that Technical Support review and reserve against. The criteria say approving applies the change, but not whether it touches those lines.
 
-The second is an overlap with SCRUM-62. SCRUM-57 AC7 tells registered Attendees when an approved change moves the event's date or time. SCRUM-62 AC2 (in review, PR #166) also tells Attendees of changes to an event they registered for. Building it in both places would send two notices for one change.
+The second is an overlap with SCRUM-62. SCRUM-57 AC7 tells registered Attendees when an approved change moves the event's date or time. SCRUM-62 AC2 tells them when an approved change alters the date, time or venue. PR #166's ADR-0125 leaves AC2 out until the Product Owner settles the overlap, so nothing sends two notices today. Building it in both places would send two for one change, and for now nobody is building AC2's venue case.
 
 ## Decision
 1. **An approved change to the equipment requirements edits the free text only.** The equipment lines stay as the coordinator left them, and the coordinator turns the new text into lines, as after a direct edit. Technical Support are still told of the change, as after a direct edit, and a date or time change marks the reservations for reassessment (ADR-0127 decision 7).
