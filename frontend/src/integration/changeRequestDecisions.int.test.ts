@@ -4,11 +4,17 @@ import {
   fetchEventRequest,
   raiseChangeRequest,
 } from '@/features/eventRequests/api'
-import { apiRequest } from '@/lib/api'
 import { sendRequestsAs } from '@/test/sendRequestsAs'
 
 import { refusal, signInAs, staffAccount } from './backend'
-import { approvedEvent, LEAD } from './plannedEvent'
+import {
+  approvedEvent,
+  coordinatorPosts,
+  LEAD,
+  SAFETY_OFFICER,
+  safetyApprovedEvent,
+  VENUE_STAFF,
+} from './plannedEvent'
 import type { PlannedEvent } from './plannedEvent'
 
 /**
@@ -37,6 +43,8 @@ const CHANGE_REQUEST_FIELDS = [
   'withdrawn_at',
 ]
 const hasLead = LEAD !== null
+/** Confirming needs an event the Safety Officer passed, with a venue Venue Staff approved. */
+const canConfirm = hasLead && VENUE_STAFF !== null && SAFETY_OFFICER !== null
 
 /** The organiser asks for a later start on their approved event; the coordinator is then signed in. */
 async function raisedOn(event: PlannedEvent): Promise<number> {
@@ -134,16 +142,19 @@ describe('SCRUM-57 deciding a change request against the backend', () => {
     },
   )
 
-  it.skipIf(!hasLead)("refuses the event's own decision while one is Pending", async () => {
-    const event = await approvedEvent()
+  it.skipIf(!canConfirm).each([
+    {
+      route: 'decide',
+      eventFor: approvedEvent,
+      body: { outcome: 'rejected', reason: 'The client withdrew.' },
+    },
+    { route: 'reject', eventFor: approvedEvent, body: { reason: 'The client withdrew.' } },
+    { route: 'confirm', eventFor: safetyApprovedEvent, body: undefined },
+  ])("refuses the event's own /$route while one is Pending", async ({ route, eventFor, body }) => {
+    const event = await eventFor()
     await raisedOn(event)
 
-    const refused = await refusal(
-      apiRequest(`/api/events/requests/${event.reference}/decide`, {
-        method: 'POST',
-        body: { outcome: 'rejected', reason: 'The client withdrew.' },
-      }),
-    )
+    const refused = await refusal(coordinatorPosts(event.reference, route, body))
 
     expect(refused).toMatchObject({
       status: 409,
