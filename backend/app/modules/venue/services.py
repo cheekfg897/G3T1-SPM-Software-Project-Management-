@@ -2085,16 +2085,19 @@ def list_pending_booking_requests(*, session: Session | None = None) -> list[Boo
     return _requests_by_event_date(DECIDABLE_REQUEST_STATUSES, session)
 
 
+def _event_by_id(event_id: int, session: Session | None) -> EventForBooking:
+    """The event with ``event_id``, with the details a booking needs; it must exist."""
+    from app.modules.events import services as event_services  # circular at import time
+
+    return event_services.get_events_for_booking([event_id], session=session)[event_id]
+
+
 def _event_of(request: VenueBookingRequest, session: Session | None) -> EventForBooking:
     """The event ``request`` is for, with the details a booking needs.
 
     The request's ``event_id`` is a foreign key, so the event is always there.
     """
-    from app.modules.events import services as event_services  # circular at import time
-
-    return event_services.get_events_for_booking([request.event_id], session=session)[
-        request.event_id
-    ]
+    return _event_by_id(request.event_id, session)
 
 
 def _locked_request(request_id: int, session: Session | None) -> VenueBookingRequest:
@@ -4055,3 +4058,58 @@ def flag_named_arrangements(
         venue = get_venue(arrangement.venue_id, session=sess)
         details.append(_flag_notice_detail(arrangement, venue, reason))
     return details
+
+
+# --------------------------------------------------------------------------
+# SCRUM-109 — arrangements booked outside the event's period
+# --------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ArrangementOutsideEvent:
+    """An active arrangement booked outside its event's period (SCRUM-109 AC1, AC2).
+
+    Both periods are shown in business time, as notices show them, so the gates can
+    name the booking and the event side by side.
+    """
+
+    id: int
+    booked_for: str
+    event_period: str
+
+
+def _shown_period(starts_at: datetime, ends_at: datetime) -> str:
+    """A period as a reason shows it, e.g. ``2026-11-01 09:00 to 2026-11-01 12:00``."""
+    return f"{_notice_time(starts_at)} to {_notice_time(ends_at)}"
+
+
+def list_arrangements_outside_event(
+    event_id: int, *, session: Session | None = None
+) -> list[ArrangementOutsideEvent]:
+    """The event's active arrangements not booked within its period (SCRUM-109).
+
+    For SCRUM-49 and SCRUM-97, which hold the event back while any is listed. Within,
+    not equal, as reconfirming a booking checks it (SCRUM-59 AC2): a shorter booking,
+    such as a breakout room, is within the event (AC3). The booking's own period is
+    compared, without the venue's setup and turnaround (ADR-0011). A retired
+    arrangement is left out. Earliest period first.
+    """
+    event = _event_by_id(event_id, session)
+    event_starts_at = _event_starts_at(event)
+    event_ends_at = _event_ends_at(event)
+    event_period = _shown_period(event_starts_at, event_ends_at)
+
+    outside = []
+    for arrangement in list_active_arrangements(event_id, session=session):
+        is_within = (
+            arrangement.starts_at >= event_starts_at and arrangement.ends_at <= event_ends_at
+        )
+        if is_within:
+            continue
+        booked_for = _shown_period(arrangement.starts_at, arrangement.ends_at)
+        outside.append(
+            ArrangementOutsideEvent(
+                id=arrangement.id, booked_for=booked_for, event_period=event_period
+            )
+        )
+    return outside

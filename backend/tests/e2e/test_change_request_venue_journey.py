@@ -256,8 +256,12 @@ def test_a_confirmed_events_approved_date_change_goes_back_through_venue_staff(
     # --- It can't go on while anything is marked (AC3) ---
     assert _body(coordinator.post(CONFIRM_PATH), 409)["error"] == "confirmation_not_allowed"
     refused = _body(coordinator.post(SAFETY_REVIEW_PATH), 409)
+    # Still on the old day, so it is outside the moved event too (SCRUM-109, ADR-0130).
+    old_day, moved_day = event_day.isoformat(), new_day.isoformat()
     assert refused["details"]["venue_arrangements"] == [
-        f"Venue arrangement {booking['id']} is flagged (requires reconfirmation): {TIMING_REASON}"
+        f"Venue arrangement {booking['id']} is flagged (requires reconfirmation): {TIMING_REASON}",
+        f"Venue arrangement {booking['id']} is for {old_day} 09:00 to {old_day} 12:00,"
+        f" outside the event's {moved_day} 09:00 to {moved_day} 17:00.",
     ]
     assert len(refused["details"]["equipment"]) == 1
 
