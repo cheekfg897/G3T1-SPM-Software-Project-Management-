@@ -1,3 +1,4 @@
+import { fetchBookingRequests, raiseBookingRequest } from '@/features/booking/api'
 import {
   decideChangeRequest,
   decideEventRequest,
@@ -5,9 +6,15 @@ import {
   fetchEventHistory,
   fetchEventRequest,
   raiseChangeRequest,
+  sendToSafetyReview,
   withdrawChangeRequest,
 } from '@/features/eventRequests/api'
-import type { ChangeRequest, DecisionChoice, EventRequest } from '@/features/eventRequests/api'
+import type {
+  ChangeRequest,
+  DecisionChoice,
+  EventRequest,
+  RequestedChange,
+} from '@/features/eventRequests/api'
 import { apiRequest } from '@/lib/api'
 import { refusal } from '@/test/refusal'
 import { sendRequestsAs } from '@/test/sendRequestsAs'
@@ -23,7 +30,8 @@ import { addChangeRequest } from './changeRequestStore'
  * ADR-0127): approving applies the values asked for, each in the history as the coordinator's
  * change, unless a field has moved since; rejecting needs a reason and changes nothing; the
  * request keeps who decided it, when and why; and while one is Pending, the event's own
- * decisions are refused (AC9). The mock's "now" is 5 Oct, 12:00 pm.
+ * decisions are refused (AC9). An approved change reassesses what it unsettles, as an edit does
+ * (SCRUM-58, ADR-0129). The mock's "now" is 5 Oct, 12:00 pm.
  */
 
 /** Omar's, under review and coordinated by Chloe: 12 Nov, 9:00 am to 5:00 pm, 250 expected. */
@@ -73,6 +81,25 @@ const EVENT_DECISIONS = [
     statusAfter: 'confirmed',
   },
 ]
+/** Chloe's: approved, and Confirmed with no planning of its own; 9:00 am to 5:00 pm, 80 expected. */
+const CAREERS_FAIR = 'EVR-BOOK0101'
+const TOWN_HALL = 'EVR-BOOK0102'
+const TIMING_REASON = "The event's date or time changed."
+const LATER_START: RequestedChange = {
+  field: 'start_time',
+  previous_value: '09:00:00',
+  requested_value: '10:00:00',
+}
+const FEWER_PEOPLE: RequestedChange = {
+  field: 'expected_attendance',
+  previous_value: 80,
+  requested_value: 60,
+}
+const NEW_PROGRAMME: RequestedChange = {
+  field: 'programme_notes',
+  previous_value: null,
+  requested_value: 'A panel is added.',
+}
 
 function signInAs(account: MockAccount) {
   sendRequestsAs(mockTokenFor(account))
@@ -356,6 +383,112 @@ describe("SCRUM-57 mock's refusals", () => {
     const refused = await refusal(decideChangeRequest(PARTNER_SUMMIT, id, APPROVE))
 
     expect(refused).toMatchObject({ status: 403, code: 'authorization_error' })
+  })
+})
+
+describe('SCRUM-58 mock of what an approved change reassesses', () => {
+  /** Chloe raises a booking for all 80 on the careers fair, in the hall (venue 1, for 200). */
+  function raiseOnCareersFair() {
+    signInAs(CHLOE)
+    return raiseBookingRequest(CAREERS_FAIR, {
+      venue_id: 1,
+      purpose: 'Hall',
+      starts_at: '2026-11-10T09:00:00+08:00',
+      ends_at: '2026-11-10T12:00:00+08:00',
+    })
+  }
+
+  it('flags the booking and shows it on the record (AC1)', async () => {
+    const hall = await raiseOnCareersFair()
+    const id = keptOn(CAREERS_FAIR, { changes: [LATER_START] })
+
+    await decideChangeRequest(CAREERS_FAIR, id, APPROVE)
+
+    const flags = [{ kind: 'requires_reconfirmation', reason: TIMING_REASON }]
+    const [booking] = await fetchBookingRequests(CAREERS_FAIR)
+    expect(booking).toMatchObject({ id: hall.id, flagged_after_change: true })
+    expect(booking?.reassessment_flags).toEqual(flags)
+    const record = await fetchEventRequest(CAREERS_FAIR)
+    expect(record.venue_arrangements?.[0]?.reassessment_flags).toEqual(flags)
+  })
+
+  it('leaves the booking untouched when anything else changes (AC4)', async () => {
+    await raiseOnCareersFair()
+    const id = keptOn(CAREERS_FAIR, { changes: [NEW_PROGRAMME] })
+
+    await decideChangeRequest(CAREERS_FAIR, id, APPROVE)
+
+    const [booking] = await fetchBookingRequests(CAREERS_FAIR)
+    expect(booking).toMatchObject({ flagged_after_change: false, reassessment_flags: [] })
+  })
+
+  it('leaves the booking untouched when the change is rejected', async () => {
+    await raiseOnCareersFair()
+    const id = keptOn(CAREERS_FAIR, { changes: [LATER_START] })
+
+    await decideChangeRequest(CAREERS_FAIR, id, { outcome: 'rejected', reason: 'No.' })
+
+    const [booking] = await fetchBookingRequests(CAREERS_FAIR)
+    expect(booking).toMatchObject({ flagged_after_change: false, reassessment_flags: [] })
+  })
+
+  it('holds the event back from Safety Review, naming the capacity (AC2, AC3)', async () => {
+    signInAs(HANA)
+    const id = keptOn(READY_TO_CONFIRM, {
+      changes: [{ field: 'expected_attendance', previous_value: 150, requested_value: 250 }],
+    })
+
+    await decideChangeRequest(READY_TO_CONFIRM, id, APPROVE)
+
+    const refused = await refusal(sendToSafetyReview(READY_TO_CONFIRM))
+    expect(refused).toMatchObject({
+      fieldErrors: {
+        venue_arrangements: [
+          "Venue arrangement 46 is flagged (no longer suitable): Expected attendance of 250 exceeds the venue's capacity of 200.",
+        ],
+      },
+    })
+  })
+
+  it('withdraws a safety approval and sends the event back to Approved (AC6)', async () => {
+    signInAs(HANA)
+    const id = keptOn(READY_TO_CONFIRM, {
+      changes: [{ field: 'start_time', previous_value: '10:00:00', requested_value: '11:00:00' }],
+    })
+
+    await decideChangeRequest(READY_TO_CONFIRM, id, APPROVE)
+
+    const record = await fetchEventRequest(READY_TO_CONFIRM)
+    expect(record.status).toBe('approved')
+    const { history } = await fetchEventHistory(READY_TO_CONFIRM)
+    expect(history.at(-1)).toMatchObject({
+      kind: 'safety_approval_withdrawn',
+      actor_name: HANA.full_name,
+      details: { significant_fields: ['start_time'] },
+    })
+  })
+
+  it('sends a Confirmed event back to Approved after any significant change (AC7)', async () => {
+    signInAs(CHLOE)
+    const id = keptOn(TOWN_HALL, { changes: [FEWER_PEOPLE] })
+
+    await decideChangeRequest(TOWN_HALL, id, APPROVE)
+
+    const record = await fetchEventRequest(TOWN_HALL)
+    expect(record.status).toBe('approved')
+  })
+
+  it('leaves a Confirmed event Confirmed after a change that is not significant (AC7)', async () => {
+    signInAs(CHLOE)
+    const id = keptOn(TOWN_HALL, { changes: [NEW_PROGRAMME] })
+
+    await decideChangeRequest(TOWN_HALL, id, APPROVE)
+
+    const record = await fetchEventRequest(TOWN_HALL)
+    expect(record.status).toBe('confirmed')
+    const { history } = await fetchEventHistory(TOWN_HALL)
+    const kinds = history.map((entry) => entry.kind)
+    expect(kinds).not.toContain('safety_approval_withdrawn')
   })
 })
 
