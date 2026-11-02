@@ -480,6 +480,34 @@ class ChangeArrangementSchema(Schema):
     justification = fields.String(validate=not_blank)
 
 
+CANCELLATION_REASON_REQUIRED_MESSAGE = "A reason is required to cancel a booking."
+
+
+class CancelBookingSchema(Schema):
+    """Payload for cancelling one of an event's approved bookings (SCRUM-111 AC1, AC4).
+
+    Cancelling all of an event's arrangements takes the same payload; its reason goes on
+    each approved booking it cancels (SCRUM-93 AC6, ADR-0118).
+
+    ``reason`` is why the coordinator cancels it: required, not ``null``, not blank, and
+    trimmed, as the reason for rejecting an event during planning is (ADR-0093).
+    """
+
+    reason = fields.String(
+        required=True,
+        validate=not_blank,
+        error_messages={
+            "required": CANCELLATION_REASON_REQUIRED_MESSAGE,
+            "null": CANCELLATION_REASON_REQUIRED_MESSAGE,
+        },
+    )
+
+    @post_load
+    def _trim_reason(self, data: dict[str, Any], **_: Any) -> dict[str, Any]:
+        data["reason"] = data["reason"].strip()
+        return data
+
+
 @dataclass(frozen=True)
 class BookingRequestAsShown:
     """A booking request with the event details Venue Staff need beside it (AC4).
