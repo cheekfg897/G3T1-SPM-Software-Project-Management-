@@ -421,6 +421,22 @@ describe('SCRUM-59 booking mock: reconfirming a flagged booking', () => {
     expect(kept).toMatchObject({ ...ownPeriod, flagged_after_change: false })
   })
 
+  it('moves a reconfirmed booking only by the changes since it was reconfirmed', async () => {
+    const halfAnHour = HOUR_MS / 2
+    flagWorkshopAfterChange(halfAnHour, halfAnHour)
+    await reconfirm(EXHIBITION.id, {
+      starts_at: '2026-11-20T13:30:00+08:00',
+      ends_at: '2026-11-20T16:30:00+08:00',
+    })
+
+    flagWorkshopAfterChange(halfAnHour, halfAnHour)
+
+    expect(await exhibitionReconfirmation()).toMatchObject({
+      starts_at: '2026-11-20T14:00:00+08:00',
+      ends_at: '2026-11-20T17:00:00+08:00',
+    })
+  })
+
   it('takes a null reason as no reason, as the schema does', async () => {
     const reconfirmed = await reconfirm(HALL.id, { ...onTheNewDay('09:00', '12:00'), reason: null })
 
