@@ -6,7 +6,7 @@
 - **Extends:** [ADR-0015](0015-in-app-notifications.md) (in-app notifications), [ADR-0018](0018-least-loaded-coordinator-and-event-history.md) (who is told on submission), [ADR-0021](0021-coordinator-reassignment.md) (who is told on reassignment)
 
 ## Context
-SCRUM-39 has six ACs. The Event Organiser is notified when an Event Coordinator is assigned to their request (AC1). They are notified when a clarification is requested, and the coordinator when it is answered (AC2), and when the request is approved or rejected, with the reason (AC3). The newly assigned coordinator is notified on assignment and on reassignment (AC4).
+SCRUM-39 has six ACs. The Event Organiser is notified when an Event Coordinator is assigned to their request (AC1). They are notified when a clarification is requested (AC2; until 17 Oct it also said "and the coordinator when it is answered"), and when the request is approved or rejected, with the reason (AC3). The newly assigned coordinator is notified on assignment and on reassignment (AC4).
 
 Week 7 customer change #5 (the Event Coordinator Lead) added two more, after this record was first written. The Lead is notified when a newly submitted request enters the unassigned queue (AC5), and the previously assigned coordinator when an event is reassigned away from them (AC6). The story's change note says assignment and reassignment are now the Lead's to perform.
 
@@ -37,11 +37,11 @@ That leaves these questions open:
 - An organiser gets one `request_assigned` notice per assignment: one on submission and one per reassignment. It links to the event's page, where their record shows the new coordinator's contact (ADR-0018).
 - A successful submission or reassignment now makes three commits, not two: the change itself, the coordinator's notice and the organiser's notice.
 - The "nobody else is notified" tests for submission and reassignment no longer list the organiser.
-- `pytest -m scrum_39` runs AC1's tests, AC4's guards and AC2's evidence.
+- `pytest -m scrum_39` runs AC1's tests, AC4's guards and AC2's and AC3's evidence.
 
 ## Met by other stories
-- **AC2** (the organiser told a clarification is requested, the coordinator that it is answered): SCRUM-32 adds the notices, their kinds and its migration ([ADR-0029](0029-clarification-requests.md)); its `tests/events/test_clarification_notifications.py` carries the `scrum_39` marker as this story's evidence.
-- **AC3** (approved or rejected, with the reason): SCRUM-31's AC10 raises these notices when the coordinator decides.
+- **AC2** (the organiser told when clarification is requested): SCRUM-32 adds the notice, its kind and its migration ([ADR-0029](0029-clarification-requests.md)); its `tests/events/test_clarification_notifications.py` carries the `scrum_39` marker as this story's evidence. On 17 Oct the criterion lost "and the coordinator when it is answered": the coordinator records the organiser's response themselves (SCRUM-32), so there is nothing to tell them. The check that no coordinator is told when a clarification is answered waits on SCRUM-32's rework. Until then the organiser's `POST /requests/<reference>/resubmit` still exists and still tells the coordinator (`_notify_coordinator_of_answer`, `clarification_answered`), and that notice and its tests stay as they are; the rework removes them with the route.
+- **AC3** (approved or rejected, with the reason): SCRUM-31's AC10 raises these notices when the coordinator decides; its `tests/events/test_decision_notifications.py` carries the `scrum_39` marker as this story's evidence.
 
 ## Blocked
 SCRUM-39's Week 7 ACs wait on the Event Coordinator Lead:
@@ -52,3 +52,4 @@ SCRUM-39's Week 7 ACs wait on the Event Coordinator Lead:
 - The customer wants the organiser's colleagues told too, or the organiser told when a request is saved unassigned.
 - SCRUM-95 lands: tell the Lead of each request that enters the unassigned queue (AC5).
 - SCRUM-95/96 let the Lead reassign: tell the previous coordinator too (AC6), and drop the "previous coordinator isn't notified" note in `reassign_coordinator`.
+- SCRUM-32's rework replaces the organiser's `/resubmit`: drop the coordinator's `clarification_answered` notice with it, and check that answering a clarification tells no coordinator (AC2 since 17 Oct).
