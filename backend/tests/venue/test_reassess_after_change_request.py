@@ -434,25 +434,39 @@ def test_a_booking_still_asking_is_marked_and_one_turned_down_is_not(
     assert flags_on(db_session, turned_down.id) == []
 
 
-def test_an_approved_date_change_leaves_a_booking_on_hold_unmarked_and_unannounced(
+@pytest.mark.parametrize(
+    ("change", "breakout_flags"),
+    [
+        pytest.param({"proposed_date": "2026-11-08"}, [TIMING_FLAG], id="date"),
+        pytest.param({"expected_attendance": 150}, [], id="attendance-above-capacity"),
+        pytest.param(
+            {"venue_requirements": "A stage"}, [REQUIREMENTS_FLAG], id="venue-requirements"
+        ),
+    ],
+)
+def test_an_approved_change_leaves_a_booking_on_hold_unmarked_and_unannounced(
     db_session: Session,
-    breakout_room: Venue,
+    auditorium: Venue,
     event: EventRequest,
-    main_id: int,
+    breakout_id: int,
+    change: dict[str, Any],
+    breakout_flags: list[tuple[str, str]],
 ) -> None:
     """Saved straight as On Hold: a real hold needs an expiry before this past event."""
-    # On Hold isn't reassessed here: that is SCRUM-109, not in Sprint 4 (ADR-0129).
-    held = raise_booking(breakout_room, event, db_session, expected_occupancy=30, **SECOND_PERIOD)
+    # Not reassessed (ADR-0129 decision 10). SCRUM-109 covers only the date or time.
+    held = raise_booking(auditorium, event, db_session)
     held.status = BookingRequestStatus.ON_HOLD
     db_session.commit()
 
-    _approve_change(db_session, event, {"proposed_date": "2026-11-08"})
+    _approve_change(db_session, event, change)
 
     assert flags_on(db_session, held.id) == []
     assert reload_request(db_session, held.id).status is BookingRequestStatus.ON_HOLD
-    assert _venue_staff_notices() == [
-        (event.id, f"Venue arrangement {main_id} at Auditorium: {TIMING_REASON}")
-    ]
+    assert flags_on(db_session, breakout_id) == breakout_flags
+    told = []
+    for _, reason in breakout_flags:
+        told.append((event.id, f"Venue arrangement {breakout_id} at Breakout room: {reason}"))
+    assert _venue_staff_notices() == told
 
 
 # --------------------------------------------------------------------------
@@ -609,6 +623,18 @@ def test_a_smaller_room_the_attendance_fell_below_is_judged_on_the_next_rise(
     assert flags_on(db_session, breakout_id) == [
         (UNSUITABLE, "Expected attendance of 50 exceeds the venue's capacity of 40.")
     ]
+
+
+def test_a_booking_raised_after_a_rise_is_judged_from_when_it_was_raised(
+    db_session: Session, auditorium: Venue, event: EventRequest, apply_change: ApplyChange
+) -> None:
+    """For 90 of the 100 expected when raised, it never held everyone."""
+    apply_change(db_session, event, {"expected_attendance": 100})
+    room_id = approved_arrangement(auditorium, event, db_session, expected_occupancy=90)
+
+    apply_change(db_session, event, {"expected_attendance": 110})
+
+    assert flags_on(db_session, room_id) == []
 
 
 # --------------------------------------------------------------------------
