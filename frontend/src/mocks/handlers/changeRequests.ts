@@ -10,7 +10,12 @@ import type { MockAccount } from '../fixtures/accounts'
 import { errorResponse, validationError } from '../responses'
 
 import { MOCK_NOW } from './catalogueFixtures'
-import { addChangeRequest, changeRequestsOf, replaceChangeRequest } from './changeRequestStore'
+import {
+  addChangeRequest,
+  changeRequestsOf,
+  hasPendingChangeRequest,
+  replaceChangeRequest,
+} from './changeRequestStore'
 import {
   applyAs,
   currentValue,
@@ -164,8 +169,7 @@ function raised(stored: MockEventRequest, organiser: MockAccount, body: Record<s
     return errorResponse(400, 'validation_error', NOTHING_TO_CHANGE_MESSAGE)
   }
   const { reference } = stored.request
-  const isPending = changeRequestsOf(reference).some((each) => each.status === 'pending')
-  if (isPending) {
+  if (hasPendingChangeRequest(reference)) {
     return errorResponse(409, 'conflict', ALREADY_PENDING_MESSAGE)
   }
 
@@ -293,7 +297,7 @@ export const changeRequestHandlers: RequestHandler[] = [
       return found.refusal
     }
     const { reference } = found.stored.request
-    const changeRequest = changeRequestsOf(reference).find((each) => String(each.id) === params.id)
+    const changeRequest = changeRequestOf(reference, params.id)
     if (changeRequest === undefined) {
       return errorResponse(404, 'not_found', CHANGE_REQUEST_NOT_FOUND_MESSAGE)
     }
