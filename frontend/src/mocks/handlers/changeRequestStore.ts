@@ -33,6 +33,11 @@ export function addChangeRequest(
   return kept
 }
 
+/** Whether the event has a change request still waiting for its coordinator. */
+export function hasPendingChangeRequest(reference: string): boolean {
+  return changeRequestsOf(reference).some((each) => each.status === 'pending')
+}
+
 const PENDING_MESSAGE =
   'The organiser has a change request waiting for your decision. Decide the change request first.'
 
@@ -41,8 +46,7 @@ const PENDING_MESSAGE =
  * during planning, confirming it) while it has a Pending change request, or null when it has none.
  */
 export function pendingChangeRequestRefusal(reference: string) {
-  const isPending = changeRequestsOf(reference).some((each) => each.status === 'pending')
-  if (!isPending) {
+  if (!hasPendingChangeRequest(reference)) {
     return null
   }
   return errorResponse(409, 'change_request_pending', PENDING_MESSAGE)
