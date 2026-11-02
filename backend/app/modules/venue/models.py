@@ -132,18 +132,14 @@ class RequirementKind(str, enum.Enum):
 
 
 class BookingRequestStatus(str, enum.Enum):
-    """Where a venue booking request stands (SCRUM-42, SCRUM-93, SCRUM-43).
-
-    Nothing cancels a request yet: SCRUM-93 withdraws one and SCRUM-43 decides one, so a
-    ``CANCELLED`` value waits for the story that needs it.
-    """
+    """Where a venue booking request stands (SCRUM-42, 43, 93 and 111)."""
 
     PENDING = "pending"
     #: Venue Staff approved the venue and are holding it tentatively until the
     #: coordinator finalises the event's arrangements (SCRUM-75, ADR-0045).
     ON_HOLD = "on_hold"
-    #: The coordinator retracted the arrangement before Venue Staff decided it
-    #: (SCRUM-93 AC6). The row stays so SCRUM-75 can ignore it when counting venues.
+    #: The coordinator retracted the arrangement before its final approval (SCRUM-93
+    #: AC6, ADR-0118). The row stays so SCRUM-75 can ignore it when counting venues.
     WITHDRAWN = "withdrawn"
     #: Venue Staff approved the request, so the venue is booked (SCRUM-43 AC3).
     APPROVED = "approved"
@@ -160,6 +156,10 @@ class BookingRequestStatus(str, enum.Enum):
     #: after the venue became unavailable (SCRUM-92 AC7, ADR-0053), or the coordinator
     #: rejected the event during planning (SCRUM-49 AC10, ADR-0093).
     RELEASED = "released"
+    #: The coordinator cancelled the approved booking, with a reason, while the event
+    #: was being planned, so the venue is free for that period again (SCRUM-111 AC1,
+    #: ADR-0117). Unlike ``RELEASED``, the coordinator chose it.
+    CANCELLED = "cancelled"
 
 
 class UnavailabilityCategory(str, enum.Enum):
@@ -251,14 +251,19 @@ class PreparationStatus(str, enum.Enum):
 #: ``REJECTED`` stays out, because SCRUM-49 and SCRUM-97 gate on every active
 #: arrangement being approved, so a rejected one must keep them waiting. ``ON_HOLD``
 #: stays out too, because SCRUM-75 treats a held arrangement as one of the event's
-#: active venues.
+#: active venues. SCRUM-49 and SCRUM-97 ignore a cancelled one like a withdrawn one
+#: (SCRUM-111, ADR-0117).
 RETIRED_REQUEST_STATUSES = frozenset(
-    {BookingRequestStatus.WITHDRAWN, BookingRequestStatus.RELEASED}
+    {
+        BookingRequestStatus.WITHDRAWN,
+        BookingRequestStatus.RELEASED,
+        BookingRequestStatus.CANCELLED,
+    }
 )
 
 #: Arrangements a significant change to the event can flag: a confirmed booking, or a
 #: request Venue Staff can still decide (SCRUM-33 AC6, ADR-0094 decision 2). A
-#: decided, withdrawn or released one has nothing left to lose. On Hold waits for its
+#: decided or retired one has nothing left to lose. On Hold waits for its
 #: own follow-up (ADR-0094), though a venue becoming unavailable flags it (ADR-0100).
 FLAGGABLE_REQUEST_STATUSES = frozenset(
     {
@@ -483,6 +488,15 @@ class VenueBookingRequest(db.Model):  # type: ignore[name-defined]
             postgresql_where=text("status IN ('pending', 'conflicting', 'on_hold')"),
             sqlite_where=text("status IN ('pending', 'conflicting', 'on_hold')"),
         ),
+        # SCRUM-70: a suggested period is whole or absent, and ends after it starts.
+        CheckConstraint(
+            "(suggested_starts_at IS NULL) = (suggested_ends_at IS NULL)",
+            name="ck_venue_booking_requests_suggestion_period_whole",
+        ),
+        CheckConstraint(
+            "suggested_ends_at > suggested_starts_at",
+            name="ck_venue_booking_requests_suggestion_ends_after_start",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -503,6 +517,14 @@ class VenueBookingRequest(db.Model):  # type: ignore[name-defined]
     #: Why Venue Staff decided as they did; required to reject (SCRUM-43 AC6). Who
     #: decided and when are in the event's history entry, as for raising a request.
     decision_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    #: The alternative Venue Staff suggested when they rejected the request: another
+    #: venue, another period, or both (SCRUM-70 AC1). Advice only: it holds nothing
+    #: (AC5), and a new request raised from it is a request of its own.
+    suggested_venue_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("venues.id"), nullable=True
+    )
+    suggested_starts_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+    suggested_ends_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
     status: Mapped[BookingRequestStatus] = mapped_column(
         Enum(
             BookingRequestStatus,
