@@ -14,6 +14,7 @@ import type { EquipmentReservation } from '@/features/equipment/api'
 import { MOCK_ACCOUNTS, mockSessionFor, mockTokenFor } from '@/mocks/fixtures/accounts'
 import type { MockAccount } from '@/mocks/fixtures/accounts'
 import { everyArrangementForRecord } from '@/mocks/handlers/booking'
+import { replaceChangeRequest } from '@/mocks/handlers/changeRequestStore'
 import { errorResponse } from '@/mocks/responses'
 import { server } from '@/mocks/server'
 import { recordRequests } from '@/test/recordRequests'
@@ -60,14 +61,13 @@ const PROJECTORS: EquipmentReservation = {
 
 const LATER_AND_BIGGER = { start_time: '10:00', expected_attendance: 300 }
 
-/** As Omar, ask for this change to the Summit; answers the request's id. */
-async function omarAsksFor(change: object) {
+/** As Omar, ask for this change to the Summit; answers the request. */
+function omarAsksFor(change: object) {
   sendRequestsAs(mockTokenFor(MOCK_ACCOUNTS.organiser))
-  const raised = await raiseChangeRequest(PARTNER_SUMMIT, { ...change, reason: REASON })
-  return raised.id
+  return raiseChangeRequest(PARTNER_SUMMIT, { ...change, reason: REASON })
 }
 
-/** As Omar, ask for the Summit to start at 10:00 for 300 people; answers the request's id. */
+/** As Omar, ask for the Summit to start at 10:00 for 300 people; answers the request. */
 function omarAsksForALaterStart() {
   return omarAsksFor(LATER_AND_BIGGER)
 }
@@ -153,6 +153,26 @@ describe('SCRUM-57 AC1 reviewing a change request', () => {
     expect(await panel.findByText('2 × Projector')).toBeInTheDocument()
   })
 
+  it('says it is loading the equipment until the reservations arrive', async () => {
+    let answer = () => {}
+    const answered = new Promise<void>((resolve) => {
+      answer = resolve
+    })
+    server.use(
+      http.get(`/api/equipment/events/${PARTNER_SUMMIT}/reservations`, async () => {
+        await answered
+        return HttpResponse.json([PROJECTORS])
+      }),
+    )
+
+    const { panel } = await openForDecision()
+
+    expect(panel.getByRole('status')).toHaveTextContent('Loading the reserved equipment…')
+    answer()
+    expect(await panel.findByText('2 × Projector')).toBeInTheDocument()
+    expect(panel.queryByRole('status')).not.toBeInTheDocument()
+  })
+
   it('says when no equipment is reserved', async () => {
     const { panel } = await openForDecision()
 
@@ -235,7 +255,7 @@ describe('SCRUM-57 AC2, AC3, AC6 deciding a change request', () => {
   })
 
   it('shows the organiser the decision and its reason (AC6)', async () => {
-    const id = await omarAsksForALaterStart()
+    const { id } = await omarAsksForALaterStart()
     sendRequestsAs(mockTokenFor(CHLOE))
     await decideChangeRequest(PARTNER_SUMMIT, id, {
       outcome: 'rejected',
@@ -268,6 +288,27 @@ describe('SCRUM-57 AC8, AC9 the refusals, as the backend words them', () => {
 
     expect(await panel.findByRole('alert')).toHaveTextContent(STALE_MESSAGE)
     expect(within(await findRegion('Change requests')).getByText('Pending')).toBeInTheDocument()
+  })
+
+  it('reads the record again after a refusal, so a request withdrawn meanwhile shows as Withdrawn', async () => {
+    const raised = await omarAsksForALaterStart()
+    const { user, panel } = await openDecisionPanel()
+    const decidePath = `/api/events/requests/${PARTNER_SUMMIT}/change-requests/${raised.id}/decide`
+    server.use(
+      http.post(decidePath, () => {
+        replaceChangeRequest(PARTNER_SUMMIT, { ...raised, status: 'withdrawn' })
+        return errorResponse(
+          409,
+          'change_request_not_pending',
+          'Only a pending change request can be decided; this one is withdrawn.',
+        )
+      }),
+    )
+
+    await user.click(panel.getByRole('button', { name: 'Approve' }))
+
+    const listed = await findRegion('Change requests')
+    expect(await within(listed).findByText('Withdrawn')).toBeInTheDocument()
   })
 
   it("says why, in the backend's words, when a requested value no longer fits the event", async () => {
