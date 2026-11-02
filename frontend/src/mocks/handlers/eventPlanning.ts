@@ -11,7 +11,10 @@ import { errorResponse, validationError } from '../responses'
 
 import { releaseEventArrangements } from './booking'
 import { MOCK_NOW } from './catalogueFixtures'
-import { pendingChangeRequestRefusal } from './changeRequestStore'
+import {
+  pendingChangeRequestRefusal,
+  withdrawPendingChangeRequestOnCancel,
+} from './changeRequestStore'
 import { releaseEventEquipment } from './equipmentReservations'
 import { NOTHING_PLANNED } from './eventPlanningFixtures'
 import type { MockArrangement, MockArrangementStatus, MockPlanning } from './eventPlanningFixtures'
@@ -29,9 +32,9 @@ import { loadCancellationReason, loadRejectionReason } from './eventReviewRules'
  * ADR-0027), its registration settings and withdrawal cut-off (SCRUM-69, ADR-0043, ADR-0086),
  * confirming it once every approval is in (SCRUM-49, ADR-0051) and rejecting it during planning
  * (SCRUM-49 AC9, AC10, ADR-0093), a rejection SCRUM-31's decision can't then change (AC12,
- * ADR-0106). Beside them, the organiser's cancellation, which releases the same things
- * (SCRUM-61, ADR-0122): any organiser of the event's organisation may, from submitted to
- * confirmed. Otherwise only the event's assigned coordinator may; the checks, their
+ * ADR-0106). Beside them, the organiser's cancellation, which releases the same things and
+ * withdraws a Pending change request (SCRUM-61, SCRUM-56 AC9, ADR-0122): any organiser of the
+ * event's organisation may, from submitted to confirmed. Otherwise only the event's assigned coordinator may; the checks, their
  * order, the codes, messages and the gaps named are the backend's (ADR-0075). Each action that
  * changes something is written to the event's history as the backend writes it (SCRUM-33 AC4).
  * No notification is raised.
@@ -450,6 +453,7 @@ export const eventPlanningHandlers: RequestHandler[] = [
     }
 
     stored.request.status = EVENT_REQUEST_STATUS.CANCELLED
+    withdrawPendingChangeRequestOnCancel(stored.request.reference)
     const withdrawals = releaseEverything(stored, organiser.full_name)
     addToHistory(stored.request.reference, [
       entryBy(organiser.full_name, 'event_cancelled', { reason: loaded.text }),

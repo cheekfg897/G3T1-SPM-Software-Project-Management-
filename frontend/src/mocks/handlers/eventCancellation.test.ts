@@ -8,7 +8,13 @@ import {
   recordEquipmentOutcome,
   reserveEquipment,
 } from '@/features/equipment/api'
-import { cancelEvent, fetchEventHistory } from '@/features/eventRequests/api'
+import {
+  cancelEvent,
+  fetchEventHistory,
+  fetchEventRequest,
+  raiseChangeRequest,
+  withdrawChangeRequest,
+} from '@/features/eventRequests/api'
 import { ROLE } from '@/config/roles'
 import { apiRequest } from '@/lib/api'
 import { refusal } from '@/test/refusal'
@@ -254,5 +260,46 @@ describe('SCRUM-61 mock: a cancellation reaches the venue and equipment mocks', 
         "An equipment outcome can't be recorded for an event that is completed, cancelled or " +
         'rejected; this one is cancelled.',
     })
+  })
+})
+
+/**
+ * The mock's cancellation closes the event's Pending change request as the backend's does
+ * (SCRUM-56 AC9, ADR-0122 decision 18), in the change request store the record reads. Omar
+ * submitted EVR-7K2M9QXA, under review, so he may raise one on it.
+ */
+describe("SCRUM-61 mock: a cancellation withdraws the event's Pending change request", () => {
+  const PARTNER_SUMMIT = 'EVR-7K2M9QXA'
+  const BIGGER = { expected_attendance: 300, reason: 'More partners said yes.' }
+
+  /** The event's change requests as its record shows them. */
+  async function changeRequestsOnRecord() {
+    return (await fetchEventRequest(PARTNER_SUMMIT)).change_requests
+  }
+
+  it("withdraws the Pending one, at the mock's now, noting the event was cancelled", async () => {
+    signInAs(OMAR)
+    const raised = await raiseChangeRequest(PARTNER_SUMMIT, BIGGER)
+
+    await cancelEvent(PARTNER_SUMMIT, { reason: REASON })
+
+    expect(await changeRequestsOnRecord()).toEqual([
+      {
+        ...raised,
+        status: 'withdrawn',
+        withdrawn_at: MOCK_NOW,
+        withdrawal_note: 'Withdrawn because the event was cancelled.',
+      },
+    ])
+  })
+
+  it('leaves one the organiser had already withdrawn as it was', async () => {
+    signInAs(OMAR)
+    const raised = await raiseChangeRequest(PARTNER_SUMMIT, BIGGER)
+    const withdrawn = await withdrawChangeRequest(PARTNER_SUMMIT, raised.id)
+
+    await cancelEvent(PARTNER_SUMMIT, { reason: REASON })
+
+    expect(await changeRequestsOnRecord()).toEqual([withdrawn])
   })
 })

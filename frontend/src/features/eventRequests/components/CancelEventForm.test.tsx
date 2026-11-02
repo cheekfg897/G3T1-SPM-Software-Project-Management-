@@ -4,10 +4,12 @@ import { delay, http, HttpResponse } from 'msw'
 import { coordinatorEventPath, organiserRequestPath } from '@/config/routes'
 import { EVENT_REQUEST_STATUS } from '@/config/eventStatus'
 import type { EventRequestStatus } from '@/config/eventStatus'
-import { MOCK_ACCOUNTS, mockSessionFor } from '@/mocks/fixtures/accounts'
+import { raiseChangeRequest } from '@/features/eventRequests/api'
+import { MOCK_ACCOUNTS, mockSessionFor, mockTokenFor } from '@/mocks/fixtures/accounts'
 import { server } from '@/mocks/server'
 import { recordRequests } from '@/test/recordRequests'
 import { renderApp } from '@/test/render'
+import { sendRequestsAs } from '@/test/sendRequestsAs'
 
 import {
   findRegion,
@@ -23,13 +25,16 @@ import {
  * confirmed, and never to the coordinator. The mock in src/mocks/handlers/eventPlanning.ts
  * answers the route as the backend does.
  *
- * Omar has EVR-Q4ZT6N1B, submitted with no one registered. Sara's organisation has EVR-BOOK0102,
- * confirmed, with three attendees registered and one withdrawn.
+ * Omar has EVR-Q4ZT6N1B, submitted with no one registered, and EVR-7K2M9QXA, under review,
+ * which he submitted himself. Sara's organisation has EVR-BOOK0102, confirmed, with three
+ * attendees registered and one withdrawn.
  */
 
 const OMAR = MOCK_ACCOUNTS.organiser
 const SARA = MOCK_ACCOUNTS.otherOrganiser
 const SUBMITTED = 'EVR-Q4ZT6N1B'
+/** Omar's own, under review, so he may ask for a change to it (SCRUM-56). */
+const PARTNER_SUMMIT = 'EVR-7K2M9QXA'
 const CONFIRMED_WITH_ATTENDEES = 'EVR-BOOK0102'
 const REASON = 'Our keynote speaker has withdrawn.'
 const CARD = 'Cancel the event'
@@ -154,6 +159,19 @@ describe('SCRUM-61 cancelling an event from its page', () => {
     const sent = requests.find((request) => request.method === 'POST')
     expect(sent?.url).toMatch(new RegExp(`/api/events/requests/${SUBMITTED}/cancel$`))
     expect(await sent?.json()).toEqual({ reason: REASON })
+  })
+
+  it('shows a Pending change request withdrawn once the event is cancelled', async () => {
+    sendRequestsAs(mockTokenFor(OMAR))
+    await raiseChangeRequest(PARTNER_SUMMIT, { expected_attendance: 300, reason: 'More came.' })
+    const { user } = await startCancelling(PARTNER_SUMMIT)
+
+    await user.click(screen.getByRole('button', { name: 'Yes, cancel the event' }))
+
+    await waitFor(() => expect(statusShownFor(PARTNER_SUMMIT)).toBe('Cancelled'))
+    expect(await findRegion('Change requests')).toHaveTextContent(
+      'Withdrawn because the event was cancelled.',
+    )
   })
 
   it("sends no reason when none is typed, and shows the backend's message under the box", async () => {
