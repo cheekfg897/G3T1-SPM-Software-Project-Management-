@@ -17,7 +17,6 @@ from unittest.mock import MagicMock
 import pytest
 from flask import Flask
 from flask_jwt_extended import decode_token
-from sqlalchemy.orm import Session
 
 from app.common.errors import AuthenticationError, ValidationError
 from app.modules.auth import routes as auth_routes
@@ -35,7 +34,7 @@ USER_ID = 41
 
 @pytest.fixture()
 def saved_coordinator(
-    make_user: Callable[..., User], db_session: Session, valid_password: str
+    make_user: Callable[..., User], save: Callable[..., None], valid_password: str
 ) -> None:
     """A saved coordinator and a decoy, so the route must find the right one."""
     coordinator = make_user(
@@ -46,8 +45,7 @@ def saved_coordinator(
         user_id=USER_ID,
     )
     decoy = make_user(email="decoy@example.com", password=valid_password, user_id=USER_ID + 1)
-    db_session.add_all([coordinator, decoy])
-    db_session.commit()
+    save(coordinator, decoy)
 
 
 @pytest.mark.usefixtures("saved_coordinator")
@@ -58,7 +56,8 @@ def test_the_right_password_answers_200_with_the_token_and_who_signed_in(
 
     assert status == 200
     body = response.get_json()
-    assert decode_token(body.pop("access_token"))["sub"] == str(USER_ID)
+    token = body.pop("access_token")
+    assert decode_token(token)["sub"] == str(USER_ID)
     assert body == {
         "token_type": "Bearer",
         "user": {"id": USER_ID, "full_name": "Gwen Lim", "role": "event_coordinator"},
@@ -77,16 +76,23 @@ def test_a_wrong_password_is_refused_without_saying_which_part_was_wrong(
     assert refusal.value.message == INVALID_CREDENTIALS_MESSAGE
 
 
-def test_a_missing_password_is_refused_by_field_before_any_password_is_checked(
+@pytest.mark.parametrize(
+    ("body", "missing_field"),
+    [({"password": "any-password"}, "email"), ({"email": EMAIL}, "password")],
+    ids=["email", "password"],
+)
+def test_a_missing_field_is_refused_by_field_before_any_password_is_checked(
     call_route: Callable[..., Any],
     replace_services: Callable[[ModuleType, dict[str, Any]], dict[str, MagicMock]],
+    body: dict[str, str],
+    missing_field: str,
 ) -> None:
     mocks = replace_services(auth_routes, {"authenticate_user": None})
 
     with pytest.raises(ValidationError) as refusal:
-        call_route(*LOGIN_ROUTE, body={"email": EMAIL})
+        call_route(*LOGIN_ROUTE, body=body)
 
-    assert refusal.value.details == {"password": ["Missing data for required field."]}
+    assert refusal.value.details == {missing_field: ["Missing data for required field."]}
     mocks["authenticate_user"].assert_not_called()
 
 
