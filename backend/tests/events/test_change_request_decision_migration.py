@@ -128,6 +128,9 @@ def test_downgrade_removes_everything_the_upgrade_added(
         "ALTER TABLE notifications ALTER COLUMN kind "
         "TYPE notification_kind USING kind::text::notification_kind",
         "DROP TYPE notification_kind_old",
+        # Gone before the columns: a request still decided would fail the checks when
+        # the upgrade adds them again.
+        "DELETE FROM event_change_requests WHERE status IN ('approved', 'rejected')",
         "ALTER TABLE event_change_requests DROP CONSTRAINT "
         "ck_event_change_requests_rejected_has_reason",
         "ALTER TABLE event_change_requests DROP CONSTRAINT "
