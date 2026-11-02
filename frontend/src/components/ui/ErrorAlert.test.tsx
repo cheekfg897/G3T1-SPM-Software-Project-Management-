@@ -64,6 +64,29 @@ describe('RefusalAlert', () => {
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
   })
 
+  it('leaves out the field its form shows under its own box, and lists the rest', () => {
+    const refusal = new ApiError(400, 'validation_error', 'Invalid request.', {
+      reason: ['Say why.'],
+      end_time: ['Event must end after it starts.'],
+    })
+
+    render(<RefusalAlert error={refusal} fieldOnTheForm="reason" />)
+
+    const reasons = within(screen.getByRole('alert')).getAllByRole('listitem')
+    expect(reasons.map((reason) => reason.textContent)).toEqual(['Event must end after it starts.'])
+  })
+
+  it('draws no list when the only field is the one its form shows', () => {
+    const refusal = new ApiError(400, 'validation_error', 'Invalid request.', {
+      reason: ['Say why.'],
+    })
+
+    render(<RefusalAlert error={refusal} fieldOnTheForm="reason" />)
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Invalid request.')
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+  })
+
   it('shows nothing when there is no error', () => {
     const { container } = render(<RefusalAlert error={null} />)
 

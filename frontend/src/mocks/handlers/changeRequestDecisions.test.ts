@@ -7,7 +7,7 @@ import {
   raiseChangeRequest,
   withdrawChangeRequest,
 } from '@/features/eventRequests/api'
-import type { DecisionChoice } from '@/features/eventRequests/api'
+import type { ChangeRequest, DecisionChoice } from '@/features/eventRequests/api'
 import { apiRequest } from '@/lib/api'
 import { refusal } from '@/test/refusal'
 import { sendRequestsAs } from '@/test/sendRequestsAs'
@@ -46,17 +46,28 @@ function signInAs(account: MockAccount) {
   sendRequestsAs(mockTokenFor(account))
 }
 
-/** Omar raises the later, bigger Partner Summit; Chloe is then signed in. Answers its id. */
-async function raisedOnTheSummit(): Promise<number> {
+/** Omar raises this change to the Partner Summit; Chloe is then signed in. Answers its id. */
+async function raisedOnTheSummit(
+  change: Parameters<typeof raiseChangeRequest>[1] = LATER_AND_BIGGER,
+): Promise<number> {
   signInAs(MOCK_ACCOUNTS.organiser)
-  const raised = await raiseChangeRequest(PARTNER_SUMMIT, LATER_AND_BIGGER)
+  const raised = await raiseChangeRequest(PARTNER_SUMMIT, change)
   signInAs(CHLOE)
   return raised.id
 }
 
-/** A Pending change request kept on `reference` as if its organiser had raised it. */
-function pendingOn(reference: string) {
-  addChangeRequest(reference, {
+/** Chloe approves the Summit: before that, she can't edit it directly (SCRUM-110). */
+async function summitApproved() {
+  signInAs(CHLOE)
+  await decideEventRequest(PARTNER_SUMMIT, APPROVE)
+}
+
+/**
+ * A change request kept on `reference` as if its organiser had raised it, Pending unless `kept`
+ * says otherwise. Answers its id.
+ */
+function keptOn(reference: string, kept: Partial<ChangeRequest> = {}): number {
+  const { id } = addChangeRequest(reference, {
     status: 'pending',
     changes: [{ field: 'expected_attendance', previous_value: 250, requested_value: 300 }],
     reason: 'More partners.',
@@ -67,7 +78,9 @@ function pendingOn(reference: string) {
     decided_by: null,
     decided_at: null,
     decision_reason: null,
+    ...kept,
   })
+  return id
 }
 
 describe('SCRUM-57 mock of approving a change request', () => {
@@ -98,9 +111,7 @@ describe('SCRUM-57 mock of approving a change request', () => {
   })
 
   it('refuses a request a field has moved away from, naming it then and now, and keeps it Pending', async () => {
-    // Approved first: before that, the coordinator can't edit it directly (SCRUM-110).
-    signInAs(CHLOE)
-    await decideEventRequest(PARTNER_SUMMIT, APPROVE)
+    await summitApproved()
     const id = await raisedOnTheSummit()
     await editEventRequest(PARTNER_SUMMIT, { expected_attendance: 200 })
 
@@ -117,6 +128,41 @@ describe('SCRUM-57 mock of approving a change request', () => {
     const record = await fetchEventRequest(PARTNER_SUMMIT)
     expect(record.change_requests[0]?.status).toBe('pending')
     expect(record.start_time).toBe('09:00:00')
+  })
+
+  it('refuses a value that would end the event before it starts, on its field', async () => {
+    await summitApproved()
+    const id = await raisedOnTheSummit({ end_time: '12:00', reason: 'The hall closes at noon.' })
+    await editEventRequest(PARTNER_SUMMIT, { start_time: '13:00' })
+
+    const refused = await refusal(decideChangeRequest(PARTNER_SUMMIT, id, APPROVE))
+
+    expect(refused).toMatchObject({
+      status: 400,
+      code: 'validation_error',
+      message: 'Invalid request.',
+      fieldErrors: { end_time: ['Event must end after it starts.'] },
+    })
+    const record = await fetchEventRequest(PARTNER_SUMMIT)
+    expect(record.change_requests[0]?.status).toBe('pending')
+    expect(record.end_time).toBe('17:00:00')
+  })
+
+  it('refuses a date that has passed since the request was raised, on its field', async () => {
+    const id = keptOn(PARTNER_SUMMIT, {
+      changes: [
+        { field: 'proposed_date', previous_value: '2026-11-12', requested_value: '2026-10-04' },
+      ],
+    })
+    signInAs(CHLOE)
+
+    const refused = await refusal(decideChangeRequest(PARTNER_SUMMIT, id, APPROVE))
+
+    expect(refused).toMatchObject({
+      status: 400,
+      code: 'validation_error',
+      fieldErrors: { proposed_date: ['Proposed date cannot be in the past.'] },
+    })
   })
 })
 
@@ -205,7 +251,7 @@ describe("SCRUM-57 AC9 mock of the event's decisions waiting for a Pending chang
     ['rejecting it in planning', HANA, APPROVED_WITH_GAPS, 'reject', { reason: 'Out of budget.' }],
     ['confirming it', HANA, READY_TO_CONFIRM, 'confirm', undefined],
   ])('refuses %s', async (_action, coordinator, reference, action, body) => {
-    pendingOn(reference)
+    keptOn(reference)
     signInAs(coordinator)
 
     const refused = await refusal(
