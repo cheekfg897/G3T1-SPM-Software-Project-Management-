@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
-from datetime import UTC, date, datetime, time, timezone
+from datetime import UTC, date, datetime, time, timedelta, timezone
 from itertools import chain, repeat
 from types import ModuleType
 from typing import Any
@@ -15,6 +15,7 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import ORMExecuteState, Session
 
+from app.common.clock import as_utc
 from app.modules.auth.models import User
 from app.modules.auth.permissions import ALL_ROLES, Role
 from app.modules.equipment.models import EquipmentReservation, EquipmentType, PreparationStatus
@@ -795,19 +796,25 @@ def record_entry(saved_event_request: EventRequest, db_session: Session) -> Call
 def save_arrangement(save: Callable[..., None]) -> SaveArrangement:
     """Save a venue arrangement for an event at a venue, with the given status.
 
-    Each one starts an hour after the last, so two Pending ones never share a period.
+    The first one starts an hour into the event, so its start can't be mistaken for the
+    event's, and runs for half an hour. Each one after it starts an hour after the last,
+    so two Pending ones never share a period. All of them lie within the event, as the
+    gates require (SCRUM-109).
     """
     arranged: list[VenueBookingRequest] = []
 
     def _save(
         event_request: EventRequest, venue: Venue, status: BookingRequestStatus
     ) -> VenueBookingRequest:
-        hour = 9 + len(arranged)
+        event_starts_at = as_utc(
+            datetime.combine(event_request.proposed_date, event_request.start_time)
+        )
+        starts_at = event_starts_at + timedelta(hours=1 + len(arranged))
         arrangement = VenueBookingRequest(
             event_id=event_request.id,
             venue_id=venue.id,
-            starts_at=datetime(2026, 11, 1, hour, tzinfo=timezone.utc),
-            ends_at=datetime(2026, 11, 1, hour, 30, tzinfo=timezone.utc),
+            starts_at=starts_at,
+            ends_at=starts_at + timedelta(minutes=30),
             purpose="Main session",
             expected_occupancy=80,
             status=status,
