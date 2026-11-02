@@ -1049,6 +1049,25 @@ def change_requests_of(db_session: Session) -> Callable[[int], list[EventChangeR
     return _change_requests_of
 
 
+def _as_postgres_receives_it(state: ORMExecuteState) -> str:
+    """The statement being executed, as SQL for Postgres: SQLite ignores row locks."""
+    return str(state.statement.compile(dialect=postgresql.dialect()))
+
+
+@pytest.fixture()
+def statements_sent(db_session: Session) -> Iterator[list[str]]:
+    """The list of every statement the session sends, as Postgres would receive it."""
+    sent: list[str] = []
+
+    def _on_execute(state: ORMExecuteState) -> None:
+        sent.append(_as_postgres_receives_it(state))
+
+    session = db_session()
+    event.listen(session, "do_orm_execute", _on_execute)
+    yield sent
+    event.remove(session, "do_orm_execute", _on_execute)
+
+
 @pytest.fixture()
 def on_event_row_lock(db_session: Session) -> Iterator[Callable[[LockAction], None]]:
     """Run an action on the database the moment an event request's row is locked.
@@ -1056,15 +1075,15 @@ def on_event_row_lock(db_session: Session) -> Iterator[Callable[[LockAction], No
     Returns a function that queues the action. It stands in for another user whose
     change committed while this one waited for the lock (SCRUM-56, ADR-0126). SQLite
     has no row locks, so one request can't be made to wait for another here; what the
-    tests check is what Postgres relies on: the event is selected ``FOR UPDATE`` (as
-    Postgres would receive it), and the row read under the lock replaces the copy the
-    session already holds. Each queued action runs once.
+    tests check is what Postgres relies on: the event is selected ``FOR NO KEY UPDATE``
+    (as Postgres would receive it), and the row read under the lock replaces the copy
+    the session already holds. Each queued action runs once.
     """
     queued: list[LockAction] = []
 
     def _on_execute(state: ORMExecuteState) -> None:
-        sql = str(state.statement.compile(dialect=postgresql.dialect()))
-        if "FROM event_requests" not in sql or "FOR UPDATE" not in sql:
+        sql = _as_postgres_receives_it(state)
+        if "FROM event_requests" not in sql or "FOR NO KEY UPDATE" not in sql:
             return
         connection = state.session.connection()
         while queued:

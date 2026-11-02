@@ -190,6 +190,28 @@ def test_the_action_is_refused_when_a_request_is_raised_while_it_waits_for_the_l
     )
 
 
+@held_up_action
+def test_the_action_locks_the_events_row_so_a_foreign_key_check_can_still_pass(
+    ready_for: Callable[[HeldUpAction], EventRequest],
+    statements_sent: list[str],
+    action: HeldUpAction,
+) -> None:
+    """A plain ``FOR UPDATE`` would hold up another transaction's history entry.
+
+    SQLite ignores row locks, so this reads the statement as Postgres would receive it.
+    """
+    ready_for(action)
+
+    action.act()
+
+    row_locks = []
+    for sql in statements_sent:
+        if "FROM event_requests" in sql and " FOR " in sql:
+            row_locks.append(sql)
+    assert len(row_locks) == 1
+    assert row_locks[0].endswith("FOR NO KEY UPDATE")
+
+
 @pytest.mark.parametrize(
     "status",
     [ChangeRequestStatus.APPROVED, ChangeRequestStatus.REJECTED, ChangeRequestStatus.WITHDRAWN],

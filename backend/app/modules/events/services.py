@@ -1341,7 +1341,7 @@ def _event_request_assigned_to(
 
 
 def _lock_event_row(event_request: EventRequest, session: Session) -> EventRequest:
-    """``event_request`` read again ``FOR UPDATE``, its row locked until the commit.
+    """``event_request`` read again under a row lock, held until the commit.
 
     Raising, withdrawing and deciding a change request, and the event's own decisions,
     take turns this way, so a check made after the lock can't be undone by another of
@@ -1350,10 +1350,13 @@ def _lock_event_row(event_request: EventRequest, session: Session) -> EventReque
     ``populate_existing`` makes the locked read replace the copy the session already
     holds, as the Lead's assignment does (ADR-0120).
     """
+    # FOR NO KEY UPDATE, because a plain FOR UPDATE also blocks the foreign key check of
+    # another transaction's insert, which deadlocks with a venue action writing a
+    # history entry while it holds an arrangement this one is about to write (ADR-0127).
     locked = (
         select(EventRequest)
         .where(EventRequest.id == event_request.id)
-        .with_for_update()
+        .with_for_update(key_share=True)
         .execution_options(populate_existing=True)
     )
     return session.scalars(locked).one()
