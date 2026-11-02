@@ -390,6 +390,80 @@ def test_an_outcome_other_than_approved_or_rejected_is_refused(
 
 
 @pytest.mark.parametrize(
+    ("body", "details"),
+    [
+        pytest.param(
+            {"outcome": "rejected", "reason": 123},
+            {"reason": ["Not a valid string."]},
+            id="reason-a-number",
+        ),
+        pytest.param(
+            {"outcome": "rejected", "reason": True},
+            {"reason": ["Not a valid string."]},
+            id="reason-a-boolean",
+        ),
+        pytest.param(
+            {"outcome": "rejected", "reason": ["No."]},
+            {"reason": ["Not a valid string."]},
+            id="reason-a-list",
+        ),
+        pytest.param(
+            {"reason": "No."},
+            {"outcome": ["Missing data for required field."]},
+            id="outcome-missing",
+        ),
+        pytest.param(
+            {"outcome": None},
+            {"outcome": ["Field may not be null."]},
+            id="outcome-null",
+        ),
+        pytest.param(
+            {"outcome": "approved", "decided_by": 9},
+            {"decided_by": ["Unknown field."]},
+            id="unknown-field",
+        ),
+    ],
+)
+def test_a_body_with_a_wrong_field_is_refused_on_that_field(
+    decide_change: DecideChange,
+    pending: EventChangeRequest,
+    change_requests_of: ChangeRequestsOf,
+    reload_event_request: ReloadEventRequest,
+    detailed_notifications_of: DetailedNotificationsOf,
+    saved_event_request: EventRequest,
+    body: dict[str, Any],
+    details: dict[str, list[str]],
+) -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        decide_change(COORDINATOR_ID, pending.id, body)
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.details == details
+    _assert_nothing_decided(
+        change_requests_of, reload_event_request, detailed_notifications_of, saved_event_request
+    )
+
+
+@pytest.mark.parametrize("body", [None, ["approved"], "approved"], ids=["none", "list", "string"])
+def test_a_body_that_is_not_an_object_is_refused(
+    decide_change: DecideChange,
+    pending: EventChangeRequest,
+    change_requests_of: ChangeRequestsOf,
+    reload_event_request: ReloadEventRequest,
+    detailed_notifications_of: DetailedNotificationsOf,
+    saved_event_request: EventRequest,
+    body: Any,
+) -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        decide_change(COORDINATOR_ID, pending.id, body)
+
+    assert exc_info.value.message == "Request body must be a JSON object."
+    _assert_nothing_decided(
+        change_requests_of, reload_event_request, detailed_notifications_of, saved_event_request
+    )
+
+
+@pytest.mark.parametrize(
     ("decision", "status", "start_time", "history_entries"),
     [
         pytest.param(APPROVE, ChangeRequestStatus.APPROVED, time(10, 0), 5, id="approve"),
