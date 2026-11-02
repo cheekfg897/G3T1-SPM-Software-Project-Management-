@@ -1,4 +1,9 @@
-import { fetchBookingRequests, raiseBookingRequest } from '@/features/booking/api'
+import {
+  decideBookingRequest,
+  fetchBookingRequests,
+  placeBookingHold,
+  raiseBookingRequest,
+} from '@/features/booking/api'
 import {
   decideChangeRequest,
   decideEventRequest,
@@ -387,6 +392,9 @@ describe("SCRUM-57 mock's refusals", () => {
 })
 
 describe('SCRUM-58 mock of what an approved change reassesses', () => {
+  const RISE_TO_90 =
+    "The event's expected attendance rose from 80 to 90, above this arrangement's expected occupancy of 80."
+
   /** Chloe raises a booking for all 80 on the careers fair, in the hall (venue 1, for 200). */
   function raiseOnCareersFair() {
     signInAs(CHLOE)
@@ -396,6 +404,41 @@ describe('SCRUM-58 mock of what an approved change reassesses', () => {
       starts_at: '2026-11-10T09:00:00+08:00',
       ends_at: '2026-11-10T12:00:00+08:00',
     })
+  }
+
+  /** The event's coordinator, already signed in, approves a change of its attendance. */
+  function approveAttendance(reference: string, from: number, to: number) {
+    const id = keptOn(reference, {
+      changes: [{ field: 'expected_attendance', previous_value: from, requested_value: to }],
+    })
+    return decideChangeRequest(reference, id, APPROVE)
+  }
+
+  /** Chloe raises a smaller room for `occupancy` of them on the careers fair (venue 2). */
+  function raiseSmallerRoom(occupancy: number) {
+    signInAs(CHLOE)
+    return raiseBookingRequest(CAREERS_FAIR, {
+      venue_id: 2,
+      purpose: 'Workshop',
+      starts_at: '2026-11-10T13:00:00+08:00',
+      ends_at: '2026-11-10T15:00:00+08:00',
+      expected_occupancy: occupancy,
+    })
+  }
+
+  /** Venue Staff hold the hall, for all 80, on a two-venue event; Chloe is then signed in. */
+  async function holdTheHall() {
+    const hall = await raiseOnCareersFair()
+    const room = await raiseSmallerRoom(10)
+    signInAs(MOCK_ACCOUNTS.venueStaff)
+    await placeBookingHold(hall.id, { expires_at: '2026-10-20T17:00:00+08:00' })
+    signInAs(CHLOE)
+    return { hallId: hall.id, roomId: room.id }
+  }
+
+  async function flagsOn(bookingId: number) {
+    const bookings = await fetchBookingRequests(CAREERS_FAIR)
+    return bookings.find((booking) => booking.id === bookingId)?.reassessment_flags
   }
 
   it('flags the booking and shows it on the record (AC1)', async () => {
@@ -430,6 +473,95 @@ describe('SCRUM-58 mock of what an approved change reassesses', () => {
 
     const [booking] = await fetchBookingRequests(CAREERS_FAIR)
     expect(booking).toMatchObject({ flagged_after_change: false, reassessment_flags: [] })
+  })
+
+  it('marks a booking an earlier rise outgrew when the attendance rises again (AC2)', async () => {
+    await raiseOnCareersFair()
+
+    await approveAttendance(CAREERS_FAIR, 80, 90)
+    await approveAttendance(CAREERS_FAIR, 90, 250)
+
+    const [booking] = await fetchBookingRequests(CAREERS_FAIR)
+    expect(booking?.reassessment_flags).toEqual([
+      { kind: 'requires_reconfirmation', reason: RISE_TO_90 },
+      {
+        kind: 'no_longer_suitable',
+        reason: "Expected attendance of 250 exceeds the venue's capacity of 200.",
+      },
+    ])
+  })
+
+  it('marks a smaller room on a rise after the attendance fell below it (ADR-0094)', async () => {
+    const room = await raiseSmallerRoom(15)
+
+    await approveAttendance(CAREERS_FAIR, 80, 10)
+    await approveAttendance(CAREERS_FAIR, 10, 18)
+
+    expect(await flagsOn(room.id)).toEqual([
+      {
+        kind: 'requires_reconfirmation',
+        reason:
+          "The event's expected attendance rose from 10 to 18, above this arrangement's expected occupancy of 15.",
+      },
+    ])
+  })
+
+  it('leaves a booking On Hold unmarked (ADR-0129 decision 10)', async () => {
+    const { hallId, roomId } = await holdTheHall()
+    const id = keptOn(CAREERS_FAIR, { changes: [LATER_START] })
+
+    await decideChangeRequest(CAREERS_FAIR, id, APPROVE)
+
+    expect(await flagsOn(hallId)).toEqual([])
+    expect(await flagsOn(roomId)).toEqual([
+      { kind: 'requires_reconfirmation', reason: TIMING_REASON },
+    ])
+  })
+
+  it('judges a hold approved later from when it was raised, as the backend reads the history', async () => {
+    const { hallId } = await holdTheHall()
+    await approveAttendance(CAREERS_FAIR, 80, 90)
+    signInAs(MOCK_ACCOUNTS.venueStaff)
+    await decideBookingRequest(hallId, { outcome: 'approved' })
+    signInAs(CHLOE)
+
+    await approveAttendance(CAREERS_FAIR, 90, 250)
+
+    expect(await flagsOn(hallId)).toEqual([
+      {
+        kind: 'no_longer_suitable',
+        reason: "Expected attendance of 250 exceeds the venue's capacity of 200.",
+      },
+    ])
+  })
+
+  it('adds nothing when the attendance falls after a rise (AC5)', async () => {
+    await raiseOnCareersFair()
+
+    await approveAttendance(CAREERS_FAIR, 80, 90)
+    await approveAttendance(CAREERS_FAIR, 90, 85)
+
+    const [booking] = await fetchBookingRequests(CAREERS_FAIR)
+    expect(booking?.reassessment_flags).toEqual([
+      { kind: 'requires_reconfirmation', reason: RISE_TO_90 },
+    ])
+  })
+
+  it('marks an arrangement the gates count on a second rise, naming the capacity (AC2)', async () => {
+    signInAs(HANA)
+
+    await approveAttendance(READY_TO_CONFIRM, 150, 160)
+    await approveAttendance(READY_TO_CONFIRM, 160, 250)
+
+    const refused = await refusal(sendToSafetyReview(READY_TO_CONFIRM))
+    expect(refused).toMatchObject({
+      fieldErrors: {
+        venue_arrangements: [
+          "Venue arrangement 46 is flagged (requires reconfirmation): The event's expected attendance rose from 150 to 160, above this arrangement's expected occupancy of 150.",
+          "Venue arrangement 46 is flagged (no longer suitable): Expected attendance of 250 exceeds the venue's capacity of 200.",
+        ],
+      },
+    })
   })
 
   it('holds the event back from Safety Review, naming the capacity (AC2, AC3)', async () => {

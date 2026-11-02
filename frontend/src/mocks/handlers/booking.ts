@@ -645,14 +645,22 @@ export function flagArrangementsAfterChange(reference: string, change: Significa
     return
   }
   requests = requests.map((existing) => {
-    const isLive = existing.event_id === event.id && FLAGGABLE_STATUSES.includes(existing.status)
-    if (!isLive) {
+    if (existing.event_id !== event.id) {
       return existing
     }
-    // The backend reads every change since the period was set back from the history (SCRUM-59).
-    drifts.set(existing.id, driftAfter(drifts.get(existing.id), change))
+    // The backend reads every change since the period was set back from the history (SCRUM-59),
+    // whatever the booking's status was at the time, so a hold approved later counts them too.
+    const drift = driftAfter(drifts.get(existing.id), change)
+    drifts.set(existing.id, drift)
+    if (!FLAGGABLE_STATUSES.includes(existing.status)) {
+      return existing
+    }
     const venueCapacity = venueById(existing.venue_id)?.capacity ?? 0
-    const size = { expectedOccupancy: existing.expected_occupancy, venueCapacity }
+    const size = {
+      expectedOccupancy: existing.expected_occupancy,
+      venueCapacity,
+      attendanceWhenArranged: drift.attendanceBefore,
+    }
     const flags = reassessmentFlagsFor(size, change)
     if (flags.length === 0) {
       return existing
