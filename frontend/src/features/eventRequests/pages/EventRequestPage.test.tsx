@@ -4,7 +4,12 @@ import { http, HttpResponse } from 'msw'
 import { EVENT_REQUEST_STATUS } from '@/config/eventStatus'
 import type { EventRequestStatus } from '@/config/eventStatus'
 import { coordinatorEventPath, organiserRequestPath, ROUTES } from '@/config/routes'
-import { raiseBookingRequest, withdrawArrangement } from '@/features/booking/api'
+import {
+  cancelBooking,
+  decideBookingRequest,
+  raiseBookingRequest,
+  withdrawArrangement,
+} from '@/features/booking/api'
 import {
   decideEventRequest,
   editEventRequest,
@@ -43,6 +48,9 @@ const ARRANGEMENT_IN_FULL: RecordVenueArrangement = {
   justification: null,
   status: 'approved',
   decision_reason: null,
+  suggested_venue_name: null,
+  suggested_starts_at: null,
+  suggested_ends_at: null,
   hold_expires_at: null,
   needs_alternative_venue: false,
   unavailability: [],
@@ -377,6 +385,32 @@ describe('SCRUM-24 AC10 event record: everything an organiser sees, at every sta
     expect(overflow).toHaveTextContent('5 Dec, 7:00 pm – 9:00 pm · Withdrawn')
   })
 
+  it("shows Venue Staff's suggested alternative beside their reason (SCRUM-70 AC3)", async () => {
+    const rejected = {
+      ...ARRANGEMENT_IN_FULL,
+      status: 'rejected',
+      decision_reason: 'Closed for repairs.',
+      suggested_venue_name: 'Garden Pavilion',
+      suggested_starts_at: '2026-11-13T09:00:00+08:00',
+      suggested_ends_at: '2026-11-13T12:00:00+08:00',
+    } satisfies RecordVenueArrangement
+    const venueOnly = { ...rejected, suggested_starts_at: null, suggested_ends_at: null }
+    server.use(
+      http.get('/api/events/requests/:reference', () =>
+        HttpResponse.json({ ...EVERYTHING_RECORDED, venue_arrangements: [rejected, venueOnly] }),
+      ),
+    )
+    openAsOrganiser('EVR-7K2M9QXA')
+
+    const venues = await section('Venue arrangements')
+    const [both, venueAlone] = within(venues).getAllByRole('listitem') as [HTMLElement, HTMLElement]
+    expect(both).toHaveTextContent('Venue Staff: Closed for repairs.')
+    expect(both).toHaveTextContent(
+      'Suggested instead: Garden Pavilion · 13 Nov, 9:00 am – 12:00 pm',
+    )
+    expect(venueAlone).toHaveTextContent('Suggested instead: Garden Pavilion · the same period')
+  })
+
   it("shows a hold's expiry, a hold that expired, and each flag with its reason", async () => {
     recordWithEverything(EVENT_REQUEST_STATUS.APPROVED)
     openAsOrganiser('EVR-7K2M9QXA')
@@ -632,6 +666,25 @@ describe('SCRUM-93 AC5 event record: every arrangement on the coordinator page',
     const venues = await section('Venue arrangements')
     expect(venues).toHaveTextContent('Careers fair')
     expect(venues).toHaveTextContent('10 Nov, 9:00 am – 12:00 pm · Withdrawn')
+  })
+
+  it('lists a booking the coordinator cancelled as Cancelled (SCRUM-111 AC1)', async () => {
+    sendRequestsAs(mockTokenFor(MOCK_ACCOUNTS.coordinator))
+    const raised = await raiseBookingRequest('EVR-BOOK0101', {
+      venue_id: 1,
+      starts_at: '2026-11-10T09:00:00+08:00',
+      ends_at: '2026-11-10T12:00:00+08:00',
+      purpose: 'Careers fair',
+    })
+    sendRequestsAs(mockTokenFor(MOCK_ACCOUNTS.venueStaff))
+    await decideBookingRequest(raised.id, { outcome: 'approved' })
+    sendRequestsAs(mockTokenFor(MOCK_ACCOUNTS.coordinator))
+    await cancelBooking('EVR-BOOK0101', raised.id, { reason: 'Moved online.' })
+    sendRequestsAs(null)
+    openAsCoordinator('EVR-BOOK0101')
+
+    const venues = await section('Venue arrangements')
+    expect(venues).toHaveTextContent('10 Nov, 9:00 am – 12:00 pm · Cancelled')
   })
 })
 

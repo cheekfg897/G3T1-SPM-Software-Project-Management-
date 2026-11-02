@@ -2982,7 +2982,7 @@ def list_event_requests_with_venue_bookings(
 
     Whatever the event's status or date, and whatever Venue Staff made of the request:
     this is everything Venue Staff are involved in, as Technical Support's list is for
-    equipment. A withdrawn or released request no longer counts (ADR-0085), and a draft
+    equipment. A retired request no longer counts (ADR-0085), and a draft
     never shows, as on every staff list (ADR-0024). Every Venue Staff user sees the
     same list, since none is assigned to particular venues (ADR-0035 decision 1).
     """
@@ -3869,7 +3869,7 @@ def _has_arrangements(event_request: EventRequest, session: Session) -> bool:
     """Whether arrangements have been made for the event (SCRUM-31 AC7, ADR-0028).
 
     An equipment request, or a venue booking request that is still one of the event's
-    arrangements, whatever Venue Staff made of it. A withdrawn or released one is not,
+    arrangements, whatever Venue Staff made of it. A retired one is not,
     just as a removed equipment request is gone (ADR-0084).
     """
     from app.modules.venue import services as venue_services  # circular at import time
@@ -4976,7 +4976,7 @@ def submit_for_safety_review(
     """Send an approved event to the Safety Officer (SCRUM-97 AC1, AC2, ADR-0047).
 
     Only the event's assigned coordinator may. The event must be approved, have at
-    least one venue arranged, every active arrangement approved (a Withdrawn one is
+    least one venue arranged, every active arrangement approved (a retired one is
     ignored) and every equipment request an outcome from Technical Support; an event
     with no equipment requests passes that check. The ``safety_review`` status and a
     ``safety_review_requested`` history entry naming the coordinator are saved in one
@@ -5649,7 +5649,7 @@ def confirm_event_request(
     Only the event's assigned coordinator may, and only by asking: nothing confirms an
     event on its own (AC3). The event must be in Safety Review with the Safety
     Officer's approval (``has_safety_approval``), have at least one venue arranged,
-    every active arrangement Approved (a Withdrawn one is ignored) and every equipment
+    every active arrangement Approved (a retired one is ignored) and every equipment
     request an outcome; an event with no equipment requests passes that check (AC2).
     The ``confirmed`` status and an ``event_confirmed`` history entry naming the
     coordinator are saved in one commit. The organiser who submitted the request is
@@ -6104,3 +6104,125 @@ def withdraw_pending_change_request_on_cancel(
     if pending is None:
         return
     _mark_withdrawn(pending, CANCELLED_WITHDRAWAL_NOTE)
+
+
+# --------------------------------------------------------------------------
+# SCRUM-93 AC10, SCRUM-111 — an event's venue arrangements change only while it is
+# planned, and one approved booking can be cancelled then
+# --------------------------------------------------------------------------
+
+#: The refusal for an event that isn't being planned, naming its status: one rule for
+#: withdrawing, changing, cancelling one and cancelling all (SCRUM-93 AC10, SCRUM-111
+#: AC4, ADR-0118).
+ARRANGEMENTS_NOT_IN_PLANNING_MESSAGE = (
+    "Only an approved event or one in Safety Review can have its venue arrangements"
+    " withdrawn, changed or cancelled; this one is {status}."
+)
+
+
+def get_event_for_arrangement_change(
+    reference: str, coordinator_id: int | str, *, session: Session | None = None
+) -> EventForBooking:
+    """The coordinator's own event, if its venue arrangements may still change.
+
+    SCRUM-93 AC10 and SCRUM-111 AC1, AC4: withdrawing, changing or cancelling one or
+    all of an event's arrangements is allowed only while the event is being planned,
+    Approved or in Safety Review (``PLANNING_STATUSES``, ADR-0118). Once it is Confirmed
+    a change goes through change review (SCRUM-56, SCRUM-57), and a Completed, Cancelled
+    or Rejected event is over.
+
+    Raises:
+        NotFoundError: 404 — no such event, or it isn't assigned to this coordinator.
+        ConflictError: 409 — the event isn't being planned; the message names its
+            status.
+    """
+    event = get_event_for_coordinator(reference, coordinator_id, session=session)
+    if event.status not in PLANNING_STATUSES:
+        raise ConflictError(ARRANGEMENTS_NOT_IN_PLANNING_MESSAGE.format(status=event.status.value))
+    return event
+
+
+def record_venue_booking_cancelled(
+    event_id: int,
+    *,
+    actor_id: int,
+    details: dict[str, Any],
+    session: Session | None = None,
+) -> EventHistoryEntry:
+    """Add the history entry for a cancelled booking, without committing (SCRUM-111).
+
+    The entry rides in the caller's transaction, so it is saved with the cancellation it
+    records or not at all (ADR-0018).
+    """
+    event_request = resolve_session(session).get(EventRequest, event_id)
+    return record_event_history(
+        event_request,
+        EventHistoryKind.VENUE_BOOKING_CANCELLED,
+        actor_id=actor_id,
+        details=details,
+        session=session,
+    )
+
+
+def return_to_planning_after_cancellation(
+    event_id: int,
+    arrangement_id: int,
+    *,
+    actor_id: int,
+    session: Session | None = None,
+) -> None:
+    """Send an event in Safety Review back to Approved if a cancellation unsettled it.
+
+    SCRUM-111 AC2, without committing, once the booking is cancelled. An event the
+    Safety Officer had passed loses the pass, through :func:`withdraw_safety_approval`
+    as any change after a pass does (ADR-0087), since the venues checked have changed.
+    One left with no active venue arrangement can't stay in Safety Review (SCRUM-97
+    AC3). Either way it goes back once; otherwise it stays in Safety Review. An Approved
+    event is left alone.
+
+    Args:
+        event_id: The event request's id.
+        arrangement_id: The cancelled arrangement, which a withdrawn approval's history
+            entry names.
+        actor_id: The coordinator who cancelled the booking.
+        session: Database session; defaults to ``db.session``.
+    """
+    from app.modules.venue import services as venue_services  # circular at import time
+
+    sess = resolve_session(session)
+    event_request = sess.get(EventRequest, event_id)
+    if event_request.status is not EventRequestStatus.SAFETY_REVIEW:
+        return
+    if has_safety_approval(event_id, session=sess):
+        details = {"venue_booking_request_id": arrangement_id}
+        withdraw_safety_approval(event_id, actor_id=actor_id, details=details, session=sess)
+        return
+    if venue_services.count_active_arrangements(event_id, session=sess) == 0:
+        _return_to_approved(event_request)
+
+
+def tell_safety_officers_of_cancelled_booking(
+    event: EventForBooking, detail: str, *, session: Session | None = None
+) -> None:
+    """Tell every Safety Officer a venue was dropped from an event in Safety Review.
+
+    SCRUM-111 AC2, once the cancellation is saved. ``event`` is the event as it was
+    before the cancellation, so only one that was in Safety Review is told of;
+    ``detail`` names the arrangement, its venue and its period. If the cancellation sent
+    the event back to Approved, the notice says so, as a significant change's does
+    (SCRUM-33 AC9, ADR-0107, ADR-0117).
+
+    Args:
+        event: The event before the cancellation.
+        detail: What was cancelled, as Venue Staff are told it.
+        session: Database session; defaults to ``db.session``.
+    """
+    if event.status is not EventRequestStatus.SAFETY_REVIEW:
+        return
+    sess = resolve_session(session)
+    event_request = sess.get(EventRequest, event.id)
+    if event_request.status is EventRequestStatus.APPROVED:
+        detail = f"{detail} {BACK_IN_PLANNING_DETAIL}"
+    _notify_safety_officers(
+        event_request, NotificationKind.SAFETY_REVIEW_VENUE_CANCELLED, sess, detail=detail
+    )
