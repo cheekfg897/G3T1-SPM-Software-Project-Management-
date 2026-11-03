@@ -1,0 +1,68 @@
+@startuml
+title Sequence diagram: equipment requests
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API and PostgreSQL are numbered, as in the
+' draw.io and PDF versions.
+' A notification is a record saved in PostgreSQL. Nothing is pushed to its recipient
+' (no email, websocket or polling): the Web App fetches it later with
+' GET /api/notifications, as the last section shows.
+
+actor "Event\nCoordinator" as coordinator
+actor "Technical\nSupport Staff" as support
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Equipment request (the event must be Approved or in Safety Review) ==
+coordinator -> web : Add an equipment line
+autonumber
+web -> api : POST /api/events/requests/:reference/equipment
+api -> db : Add equipment line (requested)
+api -> db : Save notification:\nTechnical Support
+api --> web : The new line (requested)
+autonumber stop
+web --> coordinator : Show the line
+
+support -> web : Check availability
+autonumber resume
+web -> api : GET /api/equipment/events/:reference/availability
+api --> web : Free units per type for the event's period
+autonumber stop
+web --> support : Show availability
+
+support -> web : Reserve equipment
+autonumber resume
+web -> api : POST /api/equipment/events/:reference/reservations
+api -> db : Reserved units are no longer\nfree for overlapping events
+api --> web : The reservation
+autonumber stop
+web --> support : Show the reservation
+
+support -> web : Record the outcome
+autonumber resume
+web -> api : POST /api/events/requests/:reference/\nequipment/:line_id/outcome
+api -> db : Line becomes fulfilled,\npartially fulfilled\nor unavailable
+api -> db : Save notification: coordinator
+api --> web : The line, with its outcome
+autonumber stop
+web --> support : Show the outcome
+
+== Later, the Web App fetches each recipient's saved notifications (nothing is pushed) ==
+support -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : Equipment requested for an event
+autonumber stop
+web --> support : Show notifications
+
+coordinator -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : The equipment outcome and its note
+autonumber stop
+web --> coordinator : Show notifications
+@enduml
