@@ -3,7 +3,7 @@
 AC4: the newly assigned coordinator is notified, with the same
 ``coordinator_assigned`` notification a coordinator gets on submission (ADR-0021).
 Since SCRUM-39 the organiser is also told, with ``request_assigned``
-(``test_organiser_assignment_notifications.py``). Since SCRUM-96 AC5 the coordinator
+(``test_organiser_assignment_notifications.py``). Since SCRUM-96 AC6 the coordinator
 who loses the event is told too, because the Lead made the change, not them
 (``test_lead_oversight.py`` covers that notice). Nobody else is. A refused
 reassignment notifies nobody, and a failed notification write doesn't fail the saved
@@ -46,7 +46,7 @@ NINE = "coordinator9@example.com"
 
 
 # --------------------------------------------------------------------------
-# AC4, ADR-0021 — the new coordinator is told; SCRUM-96 AC5 — so is the previous one
+# AC4, ADR-0021 — the new coordinator is told; SCRUM-96 AC6 — so is the previous one
 # --------------------------------------------------------------------------
 
 
