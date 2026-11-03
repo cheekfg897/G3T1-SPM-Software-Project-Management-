@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.auth.models import User
 from app.modules.equipment import services as equipment_services
+from app.modules.events import services as events_services
 from app.modules.events.models import (
     ChangeRequestStatus,
     EventChangeRequest,
@@ -133,6 +134,33 @@ def test_the_request_stays_pending_if_the_cancellation_is_not_saved(
 
     [saved] = change_requests_of(saved_event_request.id)
     assert (saved.status, saved.withdrawal_note) == (ChangeRequestStatus.PENDING, None)
+
+
+def test_the_withdrawal_is_saved_with_the_cancellation_even_if_nobody_can_be_told(
+    db_session: Session,
+    pending: EventChangeRequest,
+    saved_event_request: EventRequest,
+    change_requests_of: ChangeRequestsOf,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """In the cancellation's own commit, not a notice's (ADR-0122 decision 18).
+
+    A notice that can't be saved is rolled back alone (ADR-0015). Were the withdrawal
+    left for a notice's commit to save, it would be rolled back with it.
+    """
+
+    def _fail(*_: Any, **__: Any) -> None:
+        raise LOST_CONNECTION
+
+    monkeypatch.setattr(events_services, "notify_users", _fail)
+
+    _cancel(db_session)
+
+    [saved] = change_requests_of(saved_event_request.id)
+    assert (saved.status, saved.withdrawal_note) == (
+        ChangeRequestStatus.WITHDRAWN,
+        CANCELLED_WITHDRAWAL_NOTE,
+    )
 
 
 def test_a_request_decided_while_waiting_for_the_lock_stays_decided(
