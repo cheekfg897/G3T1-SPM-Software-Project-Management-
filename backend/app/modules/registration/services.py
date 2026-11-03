@@ -1,7 +1,8 @@
 """Business logic for the registration module (SCRUM-52).
 
 These functions are the module's public API: routes call them, tests call them
-directly, and the events module calls :func:`count_registered`.
+directly, and the events module calls :func:`count_registered` and
+:func:`list_registered_attendee_ids`.
 
 Facts about events come from :mod:`app.modules.events.services`, never from the events
 table (module boundary). Every function takes an optional ``session`` so unit tests can
@@ -218,7 +219,8 @@ def list_registered_attendee_ids(event_id: int, *, session: Session | None = Non
     """The Attendees holding a place at the event, in the order they registered.
 
     The events module calls this to tell them of an approved change of date or time
-    (SCRUM-57 AC7). An Attendee who withdrew holds no place.
+    (SCRUM-57 AC7), and that the event is cancelled (SCRUM-61 AC4, ADR-0122). An
+    Attendee who withdrew holds no place.
     """
     stmt = (
         select(Registration.attendee_id)
