@@ -6658,13 +6658,19 @@ def _event_request_cancellable_by(
 ) -> EventRequest:
     """The organiser's organisation's event, if it may be cancelled now (SCRUM-61 AC1).
 
+    Its row is locked (:func:`_lock_event_row`) before the status is checked, as a
+    change request's is (ADR-0126, ADR-0127), so a change request can't be raised,
+    withdrawn or decided, nor the event decided, between the check and the
+    cancellation's commit (ADR-0122).
+
     Raises:
         OrganiserWithoutOrganisationError: 403 — the organiser has no organisation.
         NotFoundError: 404 — no such event in the organiser's organisation.
         EventCancellationNotAllowedError: 409 — the event isn't between Submitted and
             Confirmed; the message names its status.
     """
-    event_request = get_event_request_for_organiser(organiser_id, reference, session=session)
+    visible = get_event_request_for_organiser(organiser_id, reference, session=session)
+    event_request = _lock_event_row(visible, session)
     if event_request.status not in CANCELLABLE_STATUSES:
         raise EventCancellationNotAllowedError(
             NOT_CANCELLABLE_MESSAGE.format(status=event_request.status.value)
@@ -6703,7 +6709,8 @@ def cancel_event_request(
     arranged for the event, as for a rejection during planning (ADR-0093): its venue
     arrangements withdrawn or released, bookings and holds included (AC2, AC6), and its
     reserved equipment returned (AC3). Its open equipment requests close with the
-    status (AC7). Then the assigned coordinator is told, with the reason (AC1), every
+    status (AC7), and a Pending change request is withdrawn, noting why (SCRUM-56 AC9,
+    ADR-0126). Then the assigned coordinator is told, with the reason (AC1), every
     registered Attendee, without it (AC4), and every Venue Staff user about each
     booking or hold released (AC8); a notice that can't be saved loses only itself
     (ADR-0015). The checks run in this order: the organiser's organisation, the
@@ -6739,6 +6746,7 @@ def cancel_event_request(
         details={"reason": reason},
         session=sess,
     )
+    withdraw_pending_change_request_on_cancel(event_request.id, session=sess)
     released = _release_arrangements(event_request.id, int(organiser_id), sess)
     sess.commit()
     _notify_assigned_coordinator(
