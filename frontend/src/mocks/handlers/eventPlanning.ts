@@ -34,10 +34,10 @@ import { loadCancellationReason, loadRejectionReason } from './eventReviewRules'
  * (SCRUM-49 AC9, AC10, ADR-0093), a rejection SCRUM-31's decision can't then change (AC12,
  * ADR-0106). Beside them, the organiser's cancellation, which releases the same things and
  * withdraws a Pending change request (SCRUM-61, SCRUM-56 AC9, ADR-0122): any organiser of the
- * event's organisation may, from submitted to confirmed. Otherwise only the event's assigned coordinator may; the checks, their
- * order, the codes, messages and the gaps named are the backend's (ADR-0075). Each action that
- * changes something is written to the event's history as the backend writes it (SCRUM-33 AC4).
- * No notification is raised.
+ * event's organisation may, from submitted to confirmed. Otherwise only the event's assigned
+ * coordinator may; the checks, their order, the codes, messages and the gaps named are the
+ * backend's (ADR-0075). Each action that changes something is written to the event's history
+ * as the backend writes it (SCRUM-33 AC4). No notification is raised.
  */
 
 const REQUEST_PATH = '/api/events/requests/:reference'
