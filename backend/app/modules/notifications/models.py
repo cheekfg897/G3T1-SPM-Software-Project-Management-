@@ -47,9 +47,9 @@ class NotificationKind(str, enum.Enum):
     CLARIFICATION_ANSWERED = "clarification_answered"
     #: Tells the organiser who submitted a request that an Event Coordinator has been
     #: assigned to it, when the Event Coordinator Lead assigns one or on a
-    #: reassignment (SCRUM-39 AC1, ADR-0030, ADR-0036). On a reassignment the previous
-    #: coordinator gets it too, with a ``detail`` saying the event is no longer theirs
-    #: (SCRUM-96 AC5, ADR-0041).
+    #: reassignment (SCRUM-39 AC1, ADR-0030, ADR-0036). Until migration 0058 the
+    #: previous coordinator got it too, with a ``detail`` saying the event was no longer
+    #: theirs (ADR-0041); they now get ``EVENT_REASSIGNED_AWAY`` (ADR-0130).
     REQUEST_ASSIGNED = "request_assigned"
     #: Tells Venue Staff a venue booking request was raised for their venue (SCRUM-42
     #: AC9, ADR-0035).
@@ -146,6 +146,11 @@ class NotificationKind(str, enum.Enum):
     #: event's date or time; the new period is the notification's ``detail`` (SCRUM-57
     #: AC7, ADR-0127). Migration 0056.
     EVENT_RESCHEDULED = "event_rescheduled"
+    #: Tells an Event Coordinator that the Lead reassigned their event to another
+    #: coordinator, so it is no longer theirs. It has no link, since they have lost
+    #: access to the event (SCRUM-28 AC1, SCRUM-96, SCRUM-39 AC6, ADR-0130).
+    #: Migration 0058.
+    EVENT_REASSIGNED_AWAY = "event_reassigned_away"
 
 
 class Notification(db.Model):  # type: ignore[name-defined]

@@ -9,7 +9,9 @@ SCRUM-87 built stay as they were: an event with no coordinator, an event that is
 over, and a move to the coordinator who already holds it.
 
 AC6 and AC7: the coordinator who loses the event is told, as well as the new
-coordinator and the organiser. AC1 to AC3: the Lead's two lists (ADR-0120). Every
+coordinator and the organiser. Their notice says the event was reassigned away, never
+that it was assigned, and has no link (SCRUM-28 AC1, SCRUM-39 AC6, ADR-0130); the
+other two keep theirs, with a link. AC1 to AC3: the Lead's two lists (ADR-0120). Every
 active event, where an event is active only once it has a coordinator (AC2, and
 SCRUM-95's rule that an event is in the queue or the active list, never both), and
 every Event Coordinator's active events, an idle one listed with none (AC3).
@@ -37,7 +39,11 @@ from app.modules.events.services import (
     list_requests_for_each_coordinator,
 )
 from app.modules.notifications.models import Notification
-from app.modules.notifications.services import NotificationKind
+from app.modules.notifications.schemas import NotificationSchema
+from app.modules.notifications.services import (
+    NotificationKind,
+    list_notifications_for_recipient,
+)
 
 pytestmark = pytest.mark.scrum_96
 
@@ -45,24 +51,59 @@ Reassign = Callable[[str], Any]
 NotificationsOf = Callable[[int], list[tuple[Any, ...]]]
 
 NINE = "coordinator9@example.com"
-PREVIOUS_COORDINATOR_DETAIL = (
-    "This event has been reassigned to another Event Coordinator and is no longer yours."
-)
+
+
+def _shown_notices_of(user_id: int) -> list[tuple[Any, ...]]:
+    """A user's notifications as the API shows them: kind, message, event and link."""
+    rows = []
+    for shown in NotificationSchema(many=True).dump(list_notifications_for_recipient(user_id)):
+        rows.append((shown["kind"], shown["message"], shown["event_name"], shown["link"]))
+    return rows
 
 
 # --------------------------------------------------------------------------
-# AC6, AC7 — the coordinator who loses the event is told
+# AC6, AC7 — the coordinator who loses the event is told, with no link (SCRUM-28 AC1,
+# SCRUM-39 AC6, ADR-0130)
 # --------------------------------------------------------------------------
 
 
-def test_the_previous_coordinator_is_told_the_event_is_no_longer_theirs(
+@pytest.mark.scrum_28
+@pytest.mark.scrum_39
+def test_the_previous_coordinator_is_told_the_event_was_reassigned_away_with_no_link(
     reassign: Reassign, detailed_notifications_of: NotificationsOf
 ) -> None:
     reassign(NINE)
 
-    assert detailed_notifications_of(3) == [
-        ("EVR-AAAAAAAA", NotificationKind.REQUEST_ASSIGNED, PREVIOUS_COORDINATOR_DETAIL)
+    assert _shown_notices_of(3) == [
+        (
+            "event_reassigned_away",
+            "This event has been reassigned to another Event Coordinator and is no longer yours.",
+            "Partner Summit",
+            None,
+        )
     ]
+    # The message says it all, so the notice carries no detail.
+    assert detailed_notifications_of(3) == [
+        ("EVR-AAAAAAAA", NotificationKind.EVENT_REASSIGNED_AWAY, None)
+    ]
+
+
+@pytest.mark.scrum_28
+@pytest.mark.scrum_39
+@pytest.mark.parametrize(
+    ("user_id", "kind", "message"),
+    [
+        (9, "coordinator_assigned", "You have been assigned to coordinate this event."),
+        (7, "request_assigned", "An Event Coordinator has been assigned to your event request."),
+    ],
+    ids=["the-new-coordinator", "the-organiser"],
+)
+def test_the_new_coordinator_and_the_organiser_keep_their_notices_with_a_link(
+    reassign: Reassign, user_id: int, kind: str, message: str
+) -> None:
+    reassign(NINE)
+
+    assert _shown_notices_of(user_id) == [(kind, message, "Partner Summit", "/events/EVR-AAAAAAAA")]
 
 
 def test_a_reassignment_tells_exactly_the_new_coordinator_the_organiser_and_the_previous_one(
@@ -72,7 +113,7 @@ def test_a_reassignment_tells_exactly_the_new_coordinator_the_organiser_and_the_
 
     notices = db_session.scalars(select(Notification)).all()
     assert sorted((notice.recipient_id, notice.kind.value) for notice in notices) == [
-        (3, "request_assigned"),
+        (3, "event_reassigned_away"),
         (7, "request_assigned"),
         (9, "coordinator_assigned"),
     ]

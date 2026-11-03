@@ -2,9 +2,12 @@
 
 AC10: the organiser who submitted the request is notified of each decision, with an
 ``event_request_approved`` or ``event_request_rejected`` notification whose
-``detail`` carries the reason (ADR-0028; also SCRUM-39 AC3). Nobody else is told, a
-refused decision notifies nobody, and a failed notification write doesn't fail the
-saved decision (ADR-0015).
+``detail`` carries the reason (ADR-0028). Nobody else is told, a refused decision
+notifies nobody, and a failed notification write doesn't fail the saved decision
+(ADR-0015).
+
+SCRUM-39 AC3 (the organiser told of the decision, with the recorded reason) is met by
+these same tests, so the module carries both stories' markers (ADR-0030).
 
 Runs against ``db_session`` with ``saved_users`` and ``saved_event_request``
 (``EVR-AAAAAAAA``, by organiser 7, submitted, assigned to Event Coordinator 3); the
@@ -31,7 +34,7 @@ from app.modules.notifications.models import Notification
 from app.modules.notifications.services import NotificationKind
 from tests.events.cases import APPROVAL_REASON, REJECTION_REASON
 
-pytestmark = pytest.mark.scrum_31
+pytestmark = [pytest.mark.scrum_31, pytest.mark.scrum_39]
 
 Decide = Callable[..., EventRequest]
 DetailedNotificationsOf = Callable[[int], list[tuple[Any, ...]]]

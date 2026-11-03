@@ -433,11 +433,6 @@ def _warn_unassigned(event_request: EventRequest) -> None:
     logger.warning("event_request_unassigned reference=%s", event_request.reference)
 
 
-REASSIGNED_AWAY_DETAIL = (
-    "This event has been reassigned to another Event Coordinator and is no longer yours."
-)
-
-
 def _notify_about_assignment(
     event_request: EventRequest,
     coordinator_id: int,
@@ -450,9 +445,9 @@ def _notify_about_assignment(
     The coordinator hears the event is theirs (SCRUM-30 AC4, SCRUM-87 AC4, SCRUM-39
     AC4), and the organiser who submitted it hears a coordinator has been assigned
     (SCRUM-39 AC1, ADR-0030). On a reassignment the coordinator who held the request
-    hears it has moved on (SCRUM-96 AC5, ADR-0041): the ``request_assigned`` kind's
-    default message is the organiser's, so their notice carries its own ``detail``
-    saying the event is no longer theirs. A first assignment has no ``previous_id``.
+    hears, with ``event_reassigned_away``, that it was reassigned away from them: never
+    that it was assigned, and with no link, since they have lost access to it (SCRUM-96,
+    SCRUM-39 AC6, SCRUM-28 AC1, ADR-0130). A first assignment has no ``previous_id``.
     They are separate writes, so losing one notice doesn't lose the others (ADR-0015).
     """
     _raise_notifications(
@@ -463,11 +458,7 @@ def _notify_about_assignment(
     )
     if previous_id is not None:
         _raise_notifications(
-            [previous_id],
-            event_request,
-            NotificationKind.REQUEST_ASSIGNED,
-            session,
-            detail=REASSIGNED_AWAY_DETAIL,
+            [previous_id], event_request, NotificationKind.EVENT_REASSIGNED_AWAY, session
         )
 
 
@@ -2339,15 +2330,16 @@ def reassign_coordinator(
 
     The Event Coordinator Lead does it, whichever coordinator holds the request (the
     route admits no one else, SCRUM-96 AC3), while it is submitted, under review,
-    awaiting clarification, approved or confirmed (ADR-0021). The request's one
-    ``coordinator_id`` is replaced (AC1, AC2), and a ``coordinator_reassigned`` history
-    entry is saved in the same commit: the previous and the new coordinator's ids and
-    names as they were then, who did it and when (AC3, AC7). The event then lists, and
+    awaiting clarification, approved, in Safety Review or confirmed (ADR-0021, SCRUM-96
+    AC4). The request's one ``coordinator_id`` is replaced (AC1, AC2), and a
+    ``coordinator_reassigned`` history entry is saved in the same commit: the previous
+    and the new coordinator's ids and names as they were then, who did it and when
+    (AC3, AC7). The event then lists, and
     gives access to, the new coordinator only (AC4, AC5). Once saved, the new
     coordinator gets the usual ``coordinator_assigned`` notification (AC4) and the
     organiser a ``request_assigned`` one (SCRUM-39 AC1, ADR-0030); a failure there is
-    logged, not raised (ADR-0015). The previous coordinator is told too, with a
-    ``request_assigned`` notification (SCRUM-96 AC5).
+    logged, not raised (ADR-0015). The previous coordinator is told too, with an
+    ``event_reassigned_away`` notification that has no link (SCRUM-96, ADR-0130).
 
     Args:
         actor_id: The Lead's user id, taken from their token, recorded as the actor.
@@ -2364,7 +2356,8 @@ def reassign_coordinator(
             email.
         NotFoundError: 404 — no such request.
         RequestNotReassignableError: 409 — the request has no coordinator, or isn't
-            submitted, under review, awaiting clarification, approved or confirmed.
+            submitted, under review, awaiting clarification, approved, in Safety Review
+            or confirmed.
         ConflictError: 409 — that coordinator already has the request.
     """
     data = load_or_raise(ReassignCoordinatorSchema(), payload)

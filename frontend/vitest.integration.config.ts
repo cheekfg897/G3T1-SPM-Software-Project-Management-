@@ -36,6 +36,10 @@ export default defineConfig({
       // Optional Technical Support account for the SCRUM-48 outcome checks; they skip without it.
       INTEGRATION_TECH_SUPPORT_EMAIL: process.env.INTEGRATION_TECH_SUPPORT_EMAIL ?? '',
       INTEGRATION_TECH_SUPPORT_PASSWORD: process.env.INTEGRATION_TECH_SUPPORT_PASSWORD ?? '',
+      // Optional second Event Coordinator, to reassign events to; those checks skip without it.
+      INTEGRATION_SECOND_COORDINATOR_EMAIL: process.env.INTEGRATION_SECOND_COORDINATOR_EMAIL ?? '',
+      INTEGRATION_SECOND_COORDINATOR_PASSWORD:
+        process.env.INTEGRATION_SECOND_COORDINATOR_PASSWORD ?? '',
     },
     // One backend, one database: run the files one after another.
     fileParallelism: false,

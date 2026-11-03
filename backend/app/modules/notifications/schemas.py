@@ -96,11 +96,18 @@ MESSAGE_BY_KIND: dict[NotificationKind, str] = {
     NotificationKind.CHANGE_REQUEST_APPROVED: "Your change request was approved.",
     NotificationKind.CHANGE_REQUEST_REJECTED: "Your change request was rejected.",
     NotificationKind.EVENT_RESCHEDULED: "An event you registered for has a new date or time.",
+    NotificationKind.EVENT_REASSIGNED_AWAY: (
+        "This event has been reassigned to another Event Coordinator and is no longer yours."
+    ),
 }
 
 #: Where a notification links to: the event's page, found by its reference
 #: (ADR-0004, ADR-0015).
 EVENT_LINK_TEMPLATE = "/events/{reference}"
+
+#: Kinds sent to someone who has just lost access to the event, so they carry no link:
+#: it would lead to a page they can no longer open (SCRUM-28 AC1, ADR-0130).
+NO_LINK_KINDS: frozenset[NotificationKind] = frozenset({NotificationKind.EVENT_REASSIGNED_AWAY})
 
 
 class NotificationSchema(Schema):
@@ -124,6 +131,8 @@ class NotificationSchema(Schema):
         """What happened, in words."""
         return MESSAGE_BY_KIND[notification.kind]
 
-    def get_link(self, notification: Notification) -> str:
-        """Where to open the event."""
+    def get_link(self, notification: Notification) -> str | None:
+        """Where to open the event, or ``None`` if the recipient lost access to it."""
+        if notification.kind in NO_LINK_KINDS:
+            return None
         return EVENT_LINK_TEMPLATE.format(reference=notification.event_reference)

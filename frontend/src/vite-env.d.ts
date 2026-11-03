@@ -19,6 +19,9 @@ interface ImportMetaEnv {
   /** Optional: a Technical Support account, for the equipment outcome checks (SCRUM-48). They skip without it. */
   readonly INTEGRATION_TECH_SUPPORT_EMAIL?: string
   readonly INTEGRATION_TECH_SUPPORT_PASSWORD?: string
+  /** Optional: a second Event Coordinator, to reassign events to (SCRUM-96, SCRUM-28). Those checks skip without it. */
+  readonly INTEGRATION_SECOND_COORDINATOR_EMAIL?: string
+  readonly INTEGRATION_SECOND_COORDINATOR_PASSWORD?: string
 }
 
 interface ImportMeta {

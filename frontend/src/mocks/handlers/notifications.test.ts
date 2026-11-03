@@ -42,6 +42,22 @@ describe('SCRUM-28 notifications mock', () => {
     expect(rows[0]?.link).toBe(`/events/${rows[0]?.event_reference}`)
   })
 
+  it('sends a coordinator who lost an event a notice with no link, as the backend does', async () => {
+    const rows = await listAs(MOCK_ACCOUNTS.coordinator)
+
+    const lost = rows.find((row) => row.kind === 'event_reassigned_away')
+    expect(lost).toMatchObject({
+      message:
+        'This event has been reassigned to another Event Coordinator and is no longer yours.',
+      link: null,
+      detail: null,
+    })
+    const others = rows.filter((row) => row.kind !== 'event_reassigned_away')
+    expect(others.map((row) => row.link)).toEqual(
+      others.map((row) => `/events/${row.event_reference}`),
+    )
+  })
+
   it('shows each account only its own notifications', async () => {
     const attendeeIds = (await listAs(MOCK_ACCOUNTS.attendee)).map((row) => row.id)
     const organiserIds = (await listAs(MOCK_ACCOUNTS.organiser)).map((row) => row.id)
