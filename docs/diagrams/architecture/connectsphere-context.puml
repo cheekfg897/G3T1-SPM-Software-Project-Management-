@@ -1,0 +1,34 @@
+@startuml
+!include <C4/C4_Context>
+
+LAYOUT_WITH_LEGEND()
+SHOW_PERSON_OUTLINE()
+title System context diagram: ConnectSphere
+
+Person_Ext(organiser, "Event Organiser", "Client representative who requests events")
+Person(lead, "Event Coordinator Lead", "Assigns new requests and oversees coordinators")
+Person(coordinator, "Event Coordinator", "Plans an assigned event")
+Person_Ext(attendee, "Attendee", "Registers for confirmed events")
+
+System(cs, "ConnectSphere", "Event requests, venue booking, equipment reservation, safety review, registration and in-app notifications")
+
+Person(venue, "Venue Staff", "Decides venue booking requests and manages venues")
+Person(support, "Technical Support Staff", "Reviews and reserves equipment")
+Person(safety, "Safety Officer", "Records the safety check")
+
+BiRel_D(organiser, cs, "Submits requests, answers\nclarifications, is notified")
+BiRel_D(lead, cs, "Assigns and reassigns coordinators,\nis notified of new requests")
+BiRel_D(coordinator, cs, "Decides requests, asks clarifications,\nrequests venues and equipment, confirms")
+Rel_D(attendee, cs, "Browses events,\nregisters, withdraws")
+
+BiRel_U(venue, cs, "Approves, rejects or holds bookings,\nmanages venues and blocks")
+BiRel_U(support, cs, "Reserves equipment, records outcomes,\nmanages the equipment catalogue")
+BiRel_U(safety, cs, "Records the safety check,\nis notified of reviews")
+
+' Hidden links keep each row in this order, left to right.
+Lay_R(organiser, lead)
+Lay_R(lead, coordinator)
+Lay_R(coordinator, attendee)
+Lay_R(venue, support)
+Lay_R(support, safety)
+@enduml
