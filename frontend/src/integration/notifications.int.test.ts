@@ -3,10 +3,11 @@ import {
   fetchUnreadCount,
   markNotificationRead,
 } from '@/features/notifications/api'
+import { reassignCoordinator } from '@/features/lead/api'
 import { sendRequestsAs } from '@/test/sendRequestsAs'
 
-import { refusal, signInAs, signInAsNewAttendee } from './backend'
-import { assignedEvent, LEAD } from './plannedEvent'
+import { refusal, signInAs, signInAsNewAttendee, staffAccount } from './backend'
+import { assignedEvent, LEAD, required, SECOND_COORDINATOR } from './plannedEvent'
 
 /** An id no notification has, so marking it read is a 404. */
 const MISSING_NOTIFICATION_ID = 2_000_000_000
@@ -67,7 +68,32 @@ describe('SCRUM-28 notifications against the backend', () => {
     },
   )
 
-  it.todo(
-    'sends the coordinator an event was reassigned away from event_reassigned_away with a null link (needs a second Event Coordinator account to reassign to; the mock and the backend unit tests cover it, ADR-0130)',
+  it.skipIf(LEAD === null || SECOND_COORDINATOR === null)(
+    'tells the coordinator an event was reassigned away from, with no link to it (ADR-0130)',
+    async () => {
+      const event = await assignedEvent()
+      await reassignCoordinator({
+        reference: event.reference,
+        coordinator_email: required(SECOND_COORDINATOR).email,
+      })
+      await signInAs(staffAccount())
+
+      // The staff account holds every event the run assigns, so its other notices are left out.
+      const notices = await fetchNotifications()
+      const aboutThisEvent = notices.filter((notice) => notice.event_reference === event.reference)
+
+      expect(aboutThisEvent.map((notice) => notice.kind)).toEqual([
+        'event_reassigned_away',
+        'coordinator_assigned',
+      ])
+      expect(aboutThisEvent[0]).toMatchObject({
+        message:
+          'This event has been reassigned to another Event Coordinator and is no longer yours.',
+        event_name: event.name,
+        link: null,
+        read_at: null,
+        detail: null,
+      })
+    },
   )
 })

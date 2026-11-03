@@ -4,7 +4,8 @@
  * then given venues by Venue Staff, sent to Safety Review and approved by the Safety Officer.
  * The Lead, Venue Staff and Safety Officer accounts are optional: they come from
  * INTEGRATION_LEAD_*, INTEGRATION_VENUE_STAFF_* and INTEGRATION_SAFETY_OFFICER_*, and the checks
- * that need them skip without them. CI makes all three (frontend.yml).
+ * that need them skip without them. So does a second Event Coordinator, to reassign an event to
+ * (INTEGRATION_SECOND_COORDINATOR_*). CI makes all four (frontend.yml).
  */
 
 import { register } from '@/features/auth/api'
@@ -42,6 +43,11 @@ export const VENUE_STAFF = optionalAccount(
 export const SAFETY_OFFICER = optionalAccount(
   import.meta.env.INTEGRATION_SAFETY_OFFICER_EMAIL,
   import.meta.env.INTEGRATION_SAFETY_OFFICER_PASSWORD,
+)
+/** An Event Coordinator other than the staff account, for the Lead to reassign events to. */
+export const SECOND_COORDINATOR = optionalAccount(
+  import.meta.env.INTEGRATION_SECOND_COORDINATOR_EMAIL,
+  import.meta.env.INTEGRATION_SECOND_COORDINATOR_PASSWORD,
 )
 
 /** The account, which the test's skip condition has already checked is set. */
