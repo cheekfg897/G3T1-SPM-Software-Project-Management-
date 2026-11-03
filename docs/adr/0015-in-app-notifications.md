@@ -1,6 +1,6 @@
 # ADR-0015: Notifications are in-app rows, one per recipient, that snapshot their event
 
-- **Status:** Accepted; who is told about a new request is superseded by ADR-0018; a notification's `detail` added by [ADR-0028](0028-review-and-decide.md); who is told about a new request superseded again by [ADR-0036](0036-event-coordinator-lead.md)
+- **Status:** Accepted; who is told about a new request is superseded by ADR-0018; a notification's `detail` added by [ADR-0028](0028-review-and-decide.md); who is told about a new request superseded again by [ADR-0036](0036-event-coordinator-lead.md); "the link is `/events/<reference>`" amended by [ADR-0130](0130-previous-coordinators-notice-says-reassigned-away-with-no-link.md): a notice to someone who lost access to the event has no link
 - **Date:** 2026-09-25
 - **Story:** SCRUM-28 Receive notifications about my events (open "Ask customer" subtask SCRUM-29: in-app only, or email too?)
 

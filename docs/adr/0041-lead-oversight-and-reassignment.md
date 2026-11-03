@@ -1,6 +1,6 @@
 # ADR-0041: The Event Coordinator Lead alone reassigns, sees every active event and each coordinator's workload; a coordinator reads only their own event's history
 
-- **Status:** Accepted; decision 5's "submitted events nobody holds yet are active" and decision 6's "a coordinator with no active event is left out" superseded by [ADR-0120](0120-lead-oversight-active-events-and-every-coordinator.md)
+- **Status:** Accepted; decision 5's "submitted events nobody holds yet are active" and decision 6's "a coordinator with no active event is left out" superseded by [ADR-0120](0120-lead-oversight-active-events-and-every-coordinator.md); decision 4 (the previous coordinator told with `request_assigned`) and the deferred separate kind superseded by [ADR-0130](0130-previous-coordinators-notice-says-reassigned-away-with-no-link.md)
 - **Date:** 2026-10-13
 - **Story:** SCRUM-96 Event Coordinator Lead oversees and reassigns coordinators' events
 - **Supersedes:** [ADR-0021](0021-coordinator-reassignment.md) decision 1 (only the event's current coordinator reassigns) and decision 10's "the previous coordinator isn't notified (87-19)"; the part of [ADR-0034](0034-coordinators-see-only-their-own-events.md) that left an Event Coordinator able to read any non-draft event's history
@@ -23,13 +23,13 @@ Most of AC4 and two thirds of AC5 were already delivered by SCRUM-87 and SCRUM-3
 
 ## Defaults to review (not agreed with the team)
 - **What "active" means (decision 2).** The ACs do not define it. `ACTIVE_STATUSES` is the single definition.
-- **Reusing `request_assigned` for the previous coordinator (decision 4).**
+- ~~**Reusing `request_assigned` for the previous coordinator (decision 4).**~~ Replaced by the `event_reassigned_away` kind, with no link, after SCRUM-28 AC1 and SCRUM-96 changed on 15 Oct: [ADR-0130](0130-previous-coordinators-notice-says-reassigned-away-with-no-link.md).
 - ~~**A coordinator with no active events is omitted from the workload list (decision 6).** The alternative is to list them with an empty list, so the Lead can see who has capacity.~~ Settled by SCRUM-96 AC3 the other way: built by [ADR-0120](0120-lead-oversight-active-events-and-every-coordinator.md).
 - ~~**The active list includes submitted-but-unassigned events, with a null coordinator (decision 5).**~~ Settled by SCRUM-96 AC2 the other way: built by [ADR-0120](0120-lead-oversight-active-events-and-every-coordinator.md). The list still returns the coordinator's name, not just the event.
 - **Venue Staff and Technical Support keep reading any event's history (decision 7).**
 
 ## Deferred
-- A distinct `COORDINATOR_UNASSIGNED` notification kind, if the team prefers one to reusing `request_assigned`. That is a migration and a follow-up ticket.
+- ~~A distinct `COORDINATOR_UNASSIGNED` notification kind, if the team prefers one to reusing `request_assigned`. That is a migration and a follow-up ticket.~~ Done as `event_reassigned_away` (migration 0058) by [ADR-0130](0130-previous-coordinators-notice-says-reassigned-away-with-no-link.md).
 
 ## Consequences
 - No migration.
@@ -40,5 +40,5 @@ Most of AC4 and two thirds of AC5 were already delivered by SCRUM-87 and SCRUM-3
 ## Revisit when
 - ~~The team decides whether the workload list should show idle coordinators.~~ Decided by SCRUM-96 AC3 and done by [ADR-0120](0120-lead-oversight-active-events-and-every-coordinator.md).
 - More than one Lead exists (AC1 would then need a per-Lead filter).
-- The team prefers a separate notification kind for losing an event.
+- ~~The team prefers a separate notification kind for losing an event.~~ The ACs now require it in effect: done by [ADR-0130](0130-previous-coordinators-notice-says-reassigned-away-with-no-link.md).
 - A role other than the Lead needs to reassign (for example an admin role).
