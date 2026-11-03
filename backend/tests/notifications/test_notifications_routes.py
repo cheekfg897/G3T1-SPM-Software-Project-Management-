@@ -21,7 +21,7 @@ from app.common.errors import AuthenticationError, NotFoundError
 from app.modules.auth.models import User
 from app.modules.auth.permissions import ALL_ROLES, Role
 from app.modules.notifications.models import Notification
-from app.modules.notifications.services import mark_notification_read
+from app.modules.notifications.services import NotificationKind, mark_notification_read
 
 pytestmark = pytest.mark.scrum_28
 
@@ -107,7 +107,8 @@ def test_every_role_may_read_its_own_notifications(
 
 
 # --------------------------------------------------------------------------
-# AC1 + AC2 — the caller's own notifications, newest first, with every field
+# AC1 + AC2 — the caller's own notifications, newest first, with every field; AC1's
+# exception, a notice to someone who lost the event, is sent with a null link (ADR-0130)
 # --------------------------------------------------------------------------
 
 
@@ -126,6 +127,19 @@ def test_list_route_shows_the_callers_notifications_newest_first_with_every_fiel
             _shown(1, created_at="2026-10-01T09:00:00+08:00"),
         ]
     }
+
+
+@pytest.mark.scrum_96
+def test_list_route_sends_a_null_link_for_a_notice_to_someone_who_lost_the_event(
+    app: Flask, notify: Notify, caller_token: str
+) -> None:
+    notify(CALLER_ID, kind=NotificationKind.EVENT_REASSIGNED_AWAY)
+
+    response, status = _call(app, LIST_ROUTE, caller_token)
+
+    assert status == 200
+    [shown] = response.get_json()["notifications"]
+    assert (shown["kind"], shown["link"]) == ("event_reassigned_away", None)
 
 
 # --------------------------------------------------------------------------

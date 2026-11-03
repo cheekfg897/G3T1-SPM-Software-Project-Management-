@@ -28,16 +28,17 @@ def raised_at() -> datetime:
 def notify(
     db_session: Session, event_summary: EventSummary, raised_at: datetime
 ) -> Callable[..., list[Notification]]:
-    """Save a "request submitted" notification about ``event_summary`` for each id."""
+    """Save a notification about ``event_summary`` for each id.
 
-    def _notify(*recipient_ids: int, now: datetime | None = raised_at) -> list[Notification]:
-        return notify_users(
-            recipient_ids,
-            event_summary,
-            NotificationKind.EVENT_REQUEST_SUBMITTED,
-            session=db_session,
-            now=now,
-        )
+    It is a "request submitted" one unless the test passes another ``kind``.
+    """
+
+    def _notify(
+        *recipient_ids: int,
+        now: datetime | None = raised_at,
+        kind: NotificationKind = NotificationKind.EVENT_REQUEST_SUBMITTED,
+    ) -> list[Notification]:
+        return notify_users(recipient_ids, event_summary, kind, session=db_session, now=now)
 
     return _notify
 

@@ -146,6 +146,11 @@ class NotificationKind(str, enum.Enum):
     #: event's date or time; the new period is the notification's ``detail`` (SCRUM-57
     #: AC7, ADR-0127). Migration 0056.
     EVENT_RESCHEDULED = "event_rescheduled"
+    #: Tells an Event Coordinator that the Lead reassigned their event to another
+    #: coordinator, so it is no longer theirs. It has no link, since they have lost
+    #: access to the event (SCRUM-28 AC1, SCRUM-96, SCRUM-39 AC6, ADR-0130).
+    #: Migration 0058.
+    EVENT_REASSIGNED_AWAY = "event_reassigned_away"
 
 
 class Notification(db.Model):  # type: ignore[name-defined]
