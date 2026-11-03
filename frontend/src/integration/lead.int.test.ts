@@ -8,7 +8,7 @@ import {
 import { sendRequestsAs } from '@/test/sendRequestsAs'
 
 import { refusal, signInAs, signInAsNewAttendee, staffAccount } from './backend'
-import { LEAD, required, submittedEvent } from './plannedEvent'
+import { EVENT_DATE, LEAD, required, SECOND_COORDINATOR, submittedEvent } from './plannedEvent'
 import type { PlannedEvent } from './plannedEvent'
 
 /** The fields the oversight lists send for an event (SCRUM-24 AC8), sorted. */
@@ -110,10 +110,11 @@ describe('SCRUM-95 Lead queue contract (ADR-0036)', () => {
 /**
  * SCRUM-96: the Lead's oversight routes against the real backend. The integration setup makes an
  * Event Coordinator (staffAccount) and can sign attendees up, so the refusals run for real. The
- * Lead's own answers run when the run has a Lead account (INTEGRATION_LEAD_*, which CI makes).
- * What a shared backend can't show (the order of every event, empty lists, a second coordinator to
- * reassign to) waits as todos, and the mock handlers in src/mocks/handlers/lead.ts stand in
- * (docs/adr/0062, docs/adr/0120).
+ * Lead's own answers run when the run has a Lead account (INTEGRATION_LEAD_*, which CI makes), and
+ * a reassignment when it also has a second Event Coordinator to reassign to
+ * (INTEGRATION_SECOND_COORDINATOR_*, which CI makes too). What a shared backend can't show (the
+ * order of every event, empty lists) waits as todos, and the mock handlers in
+ * src/mocks/handlers/lead.ts stand in (docs/adr/0062, docs/adr/0120).
  */
 describe('SCRUM-96 Lead oversight contract (ADR-0041, ADR-0120)', () => {
   afterEach(() => sendRequestsAs(null))
@@ -205,8 +206,26 @@ describe('SCRUM-96 Lead oversight contract (ADR-0041, ADR-0120)', () => {
     'lists an Event Coordinator who holds no active event with 0 (the run has no coordinator account it can keep idle)',
   )
   it.todo('answers an empty active list and an empty workload with their messages')
-  it.todo(
+  it.skipIf(LEAD === null || SECOND_COORDINATOR === null)(
     'reassigns by coordinator_email and answers the request with the new coordinator, including the fields the mock omits',
+    async () => {
+      const held = await eventHeldByTheStaffAccount()
+      const newCoordinatorEmail = required(SECOND_COORDINATOR).email
+
+      const answer = await reassignCoordinator({
+        reference: held.reference,
+        coordinator_email: newCoordinatorEmail,
+      })
+
+      expect(answer).toMatchObject({
+        reference: held.reference,
+        name: held.name,
+        status: 'submitted',
+        coordinator: { full_name: expect.any(String) as string, email: newCoordinatorEmail },
+        proposed_date: EVENT_DATE,
+        expected_attendance: 120,
+      })
+    },
   )
   it.todo(
     'refuses a reassignment in order: payload 400, reference 404, no coordinator 409, not active 409, unknown email 400, same coordinator 409',
