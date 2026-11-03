@@ -841,6 +841,33 @@ def _confirmed_detail(type_name: str, kept: int, held: int) -> str:
     )
 
 
+def _lock_type_then_event(
+    need: events_services.EventEquipmentNeed, equipment_type_id: int, session: Session
+) -> tuple[EquipmentType, events_services.EventEquipmentNeed]:
+    """Lock the equipment type, then the event's row, and refuse an event now closed.
+
+    The event's lock makes saving a reservation, or confirming one's move, take turns
+    with the organiser's cancellation, which holds it while it releases the event's
+    equipment (SCRUM-61 AC3, ADR-0122): one that waited sees the event cancelled here.
+    The type comes first because marking units out of service locks the type and then
+    writes the event, withdrawing its safety approval (SCRUM-47 AC5); taking the event
+    first deadlocks with it.
+
+    Returns:
+        The locked type, and the event's period and lines as read under its lock.
+
+    Raises:
+        ValidationError: 400 on ``equipment_type_id`` — no such equipment type.
+        EquipmentNotReservableError: 409 — the event is completed, cancelled or
+            rejected.
+    """
+    equipment_type = _locked_equipment_type(equipment_type_id, session)
+    locked_need = events_services.lock_event_equipment_need(need.event_id, session=session)
+    if not locked_need.accepts_reservations:
+        raise EquipmentNotReservableError(events_services.RESERVATIONS_CLOSED_MESSAGE)
+    return equipment_type, locked_need
+
+
 def confirm_reservation_move(
     reference: str,
     equipment_type_id: int,
@@ -883,7 +910,7 @@ def confirm_reservation_move(
         raise EquipmentNotReservableError(events_services.RESERVATIONS_CLOSED_MESSAGE)
     if not has_reservations_to_reassess(need.event_id, equipment_type_id, session=sess):
         raise NotFoundError(NOTHING_TO_REASSESS_MESSAGE)
-    equipment_type = get_equipment_type(equipment_type_id, session=sess)
+    equipment_type, need = _lock_type_then_event(need, equipment_type_id, sess)
     provided = _quantity_to_confirm(need, equipment_type, sess)
     if provided is None:
         raise ConflictError(RECORD_THE_OUTCOME_MESSAGE)
@@ -1009,10 +1036,11 @@ def reserve_equipment(
     refused with how many are free (AC3). The reservation holds the event's exact
     start and end, so overlapping events see that many fewer and others none fewer
     (AC2). Each call adds a reservation; several for one event and type add up, and
-    together they may not exceed the event's line for the type (SCRUM-60 AC9). The
-    reservation and its entry in the event's history are saved in one commit. Nobody is
-    notified: the coordinator hears once, when the outcome is recorded (AC5, SCRUM-48,
-    ADR-0102).
+    together they may not exceed the event's line for the type (SCRUM-60 AC9). The type
+    and then the event are locked before anything is counted, so a reservation takes
+    turns with the event's cancellation (SCRUM-61 AC3, ADR-0122). The reservation and
+    its entry in the event's history are saved in one commit. Nobody is notified: the
+    coordinator hears once, when the outcome is recorded (AC5, SCRUM-48, ADR-0102).
 
     Args:
         reference: The event's ``EVR-…`` reference.
@@ -1041,7 +1069,7 @@ def reserve_equipment(
 
     # Lock, then count. Counting first would miss a reservation committed while this
     # one waited for the lock (Review Focus 3).
-    equipment_type = _locked_equipment_type(data["equipment_type_id"], sess)
+    equipment_type, need = _lock_type_then_event(need, data["equipment_type_id"], sess)
     _check_within_the_line(need, equipment_type.id, data["quantity"], sess)
     available = available_quantity(equipment_type.id, need.starts_at, need.ends_at, session=sess)
     if data["quantity"] > available:

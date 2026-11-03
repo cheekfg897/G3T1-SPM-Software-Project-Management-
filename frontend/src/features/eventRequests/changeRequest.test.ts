@@ -1,4 +1,14 @@
-import { describeAgainstNow, describeRequestedChange, requestedChange } from './changeRequest'
+import { EVENT_REQUEST_STATUS } from '@/config/eventStatus'
+import type { EventRequestStatus } from '@/config/eventStatus'
+import { ROLE } from '@/config/roles'
+import type { Role } from '@/config/roles'
+
+import {
+  canRequestChange,
+  describeAgainstNow,
+  describeRequestedChange,
+  requestedChange,
+} from './changeRequest'
 import { formWith, RECORD } from './test/recordForm'
 
 /**
@@ -120,5 +130,45 @@ describe('SCRUM-57 AC1 a requested change beside what the event holds now', () =
     const change = { field: 'name', previous_value: 'Old', requested_value: 'New' }
 
     expect(describeAgainstNow(change, RECORD).value).toBe('Not set now → New')
+  })
+})
+
+/**
+ * SCRUM-56 AC1, AC6: who is offered a change request, as the page offers the form and the cancel
+ * confirmation offers it instead (SCRUM-61, ADR-0122): the organiser, from Submitted to
+ * Confirmed. The statuses are written out, and the others built from the list of them.
+ */
+describe('SCRUM-56 AC1, AC6 who may request a change', () => {
+  const REQUESTABLE: EventRequestStatus[] = [
+    EVENT_REQUEST_STATUS.SUBMITTED,
+    EVENT_REQUEST_STATUS.UNDER_REVIEW,
+    EVENT_REQUEST_STATUS.AWAITING_CLARIFICATION,
+    EVENT_REQUEST_STATUS.APPROVED,
+    EVENT_REQUEST_STATUS.SAFETY_REVIEW,
+    EVENT_REQUEST_STATUS.CONFIRMED,
+  ]
+  const NOT_REQUESTABLE = Object.values(EVENT_REQUEST_STATUS).filter(
+    (status) => !REQUESTABLE.includes(status),
+  )
+  const NOT_ORGANISERS = Object.values(ROLE).filter((role) => role !== ROLE.EVENT_ORGANISER)
+
+  function viewerWith(role: Role) {
+    return { id: 1, full_name: 'Omar Rahman', role }
+  }
+
+  it.each(REQUESTABLE)('offers it to the organiser of an event that is %s', (status) => {
+    expect(canRequestChange(viewerWith(ROLE.EVENT_ORGANISER), { ...RECORD, status })).toBe(true)
+  })
+
+  it.each(NOT_REQUESTABLE)('offers nothing on an event that is %s', (status) => {
+    expect(canRequestChange(viewerWith(ROLE.EVENT_ORGANISER), { ...RECORD, status })).toBe(false)
+  })
+
+  it.each(NOT_ORGANISERS)('offers nothing to %s', (role) => {
+    expect(canRequestChange(viewerWith(role), RECORD)).toBe(false)
+  })
+
+  it('offers nothing to someone signed out', () => {
+    expect(canRequestChange(null, RECORD)).toBe(false)
   })
 })

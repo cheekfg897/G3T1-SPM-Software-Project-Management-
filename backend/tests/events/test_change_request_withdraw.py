@@ -6,9 +6,9 @@ Withdrawn, with when, and the assigned coordinator is told. A request already de
 (ADR-0126).
 
 AC9: an event cancelled (SCRUM-61) while a change request is Pending closes the
-request as Withdrawn, noting the event was cancelled. SCRUM-61 isn't built yet, so the
-tests call :func:`withdraw_pending_change_request_on_cancel`, the function its
-cancellation is to call inside its own transaction.
+request as Withdrawn, noting the event was cancelled. These tests call
+:func:`withdraw_pending_change_request_on_cancel` directly; SCRUM-61's cancellation
+calls it inside its own transaction (``test_cancel_event_change_request.py``).
 
 Runs against ``db_session`` with ``saved_users``, ``other_organisers`` and
 ``saved_event_request`` (``EVR-AAAAAAAA``, organiser 7's, assigned to Event Coordinator

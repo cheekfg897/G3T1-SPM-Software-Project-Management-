@@ -146,6 +146,15 @@ class NotificationKind(str, enum.Enum):
     #: event's date or time; the new period is the notification's ``detail`` (SCRUM-57
     #: AC7, ADR-0127). Migration 0056.
     EVENT_RESCHEDULED = "event_rescheduled"
+    #: Tells the event's assigned coordinator, with the organiser's reason as the
+    #: ``detail``, and every registered Attendee, with no ``detail``, that the
+    #: organiser cancelled the event (SCRUM-61 AC1, AC4, ADR-0122). Migration 0057.
+    EVENT_CANCELLED = "event_cancelled"
+    #: Tells every Venue Staff user that cancelling an event released one of its
+    #: approved bookings or holds; the arrangement, the venue and its period are the
+    #: notification's ``detail``, as for a rejection's ``VENUE_BOOKING_RELEASED``
+    #: (SCRUM-61 AC8, ADR-0103, ADR-0122). Migration 0057.
+    VENUE_BOOKING_RELEASED_BY_CANCELLATION = "venue_booking_released_by_cancellation"
 
 
 class Notification(db.Model):  # type: ignore[name-defined]

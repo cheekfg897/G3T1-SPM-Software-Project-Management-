@@ -2,11 +2,16 @@ import type { ChangeRequest } from '@/features/eventRequests/api'
 
 import { errorResponse } from '../responses'
 
+import { MOCK_NOW } from './catalogueFixtures'
+
 /**
  * Each event's change requests as they stand, oldest first (SCRUM-56, ADR-0126): what the
  * change request routes keep (changeRequests.ts) and the event's record shows
  * (eventRequests.ts). Kept apart from both, so neither imports the other. None to start with.
  */
+
+/** What a change request withdrawn by its event's cancellation says (SCRUM-56 AC9). */
+const CANCELLED_WITHDRAWAL_NOTE = 'Withdrawn because the event was cancelled.'
 
 let storedChangeRequests: Record<string, ChangeRequest[]> = {}
 let lastId = 0
@@ -57,4 +62,22 @@ export function replaceChangeRequest(reference: string, changed: ChangeRequest):
   storedChangeRequests[reference] = changeRequestsOf(reference).map((changeRequest) =>
     changeRequest.id === changed.id ? changed : changeRequest,
   )
+}
+
+/**
+ * Close the event's Pending change request as its cancellation does, as
+ * `withdraw_pending_change_request_on_cancel`: Withdrawn at the mock's "now", noting why
+ * (SCRUM-56 AC9, ADR-0122). A request no longer Pending is left as it is.
+ */
+export function withdrawPendingChangeRequestOnCancel(reference: string): void {
+  for (const changeRequest of changeRequestsOf(reference)) {
+    if (changeRequest.status === 'pending') {
+      replaceChangeRequest(reference, {
+        ...changeRequest,
+        status: 'withdrawn',
+        withdrawn_at: MOCK_NOW,
+        withdrawal_note: CANCELLED_WITHDRAWAL_NOTE,
+      })
+    }
+  }
 }
