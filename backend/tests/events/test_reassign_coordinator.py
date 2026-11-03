@@ -2,7 +2,8 @@
 
 AC1: an assigned event can be reassigned to a different Event Coordinator, named by
 their email; since SCRUM-96 only an Event Coordinator Lead may do it, while the request
-is submitted, under review, awaiting clarification, approved or confirmed (ADR-0021).
+is submitted, under review, awaiting clarification, approved, in Safety Review or
+confirmed (ADR-0021, SCRUM-96 AC4).
 AC2: the event still has exactly one coordinator. AC3 and AC7: the change is written to
 the event history in the same commit as the change itself, naming the previous and the
 new coordinator by id and by name, who did it and when.
@@ -72,6 +73,7 @@ REASSIGNABLE = [
     EventRequestStatus.UNDER_REVIEW,
     EventRequestStatus.AWAITING_CLARIFICATION,
     EventRequestStatus.APPROVED,
+    EventRequestStatus.SAFETY_REVIEW,
     EventRequestStatus.CONFIRMED,
 ]
 #: A draft is out of scope here: it is hidden from coordinators altogether

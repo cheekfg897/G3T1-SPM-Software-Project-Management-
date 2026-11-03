@@ -2330,10 +2330,11 @@ def reassign_coordinator(
 
     The Event Coordinator Lead does it, whichever coordinator holds the request (the
     route admits no one else, SCRUM-96 AC3), while it is submitted, under review,
-    awaiting clarification, approved or confirmed (ADR-0021). The request's one
-    ``coordinator_id`` is replaced (AC1, AC2), and a ``coordinator_reassigned`` history
-    entry is saved in the same commit: the previous and the new coordinator's ids and
-    names as they were then, who did it and when (AC3, AC7). The event then lists, and
+    awaiting clarification, approved, in Safety Review or confirmed (ADR-0021, SCRUM-96
+    AC4). The request's one ``coordinator_id`` is replaced (AC1, AC2), and a
+    ``coordinator_reassigned`` history entry is saved in the same commit: the previous
+    and the new coordinator's ids and names as they were then, who did it and when
+    (AC3, AC7). The event then lists, and
     gives access to, the new coordinator only (AC4, AC5). Once saved, the new
     coordinator gets the usual ``coordinator_assigned`` notification (AC4) and the
     organiser a ``request_assigned`` one (SCRUM-39 AC1, ADR-0030); a failure there is
@@ -2355,7 +2356,8 @@ def reassign_coordinator(
             email.
         NotFoundError: 404 — no such request.
         RequestNotReassignableError: 409 — the request has no coordinator, or isn't
-            submitted, under review, awaiting clarification, approved or confirmed.
+            submitted, under review, awaiting clarification, approved, in Safety Review
+            or confirmed.
         ConflictError: 409 — that coordinator already has the request.
     """
     data = load_or_raise(ReassignCoordinatorSchema(), payload)
