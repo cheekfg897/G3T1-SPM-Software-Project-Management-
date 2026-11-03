@@ -200,6 +200,17 @@ describe('SCRUM-61 cancelling an event from its page', () => {
     expect(await sent?.json()).toEqual({})
   })
 
+  it('closes the question after a refusal, so the reason can be fixed before asking again', async () => {
+    const { user } = openAsOmar(SUBMITTED)
+    await user.click(await screen.findByRole('button', { name: 'Cancel event' }))
+
+    await user.click(screen.getByRole('button', { name: 'Yes, cancel the event' }))
+
+    const card = await findRegion(CARD)
+    expect(await within(card).findByRole('button', { name: 'Cancel event' })).toBeInTheDocument()
+    expect(within(card).queryByRole('button', { name: 'Yes, cancel the event' })).toBeNull()
+  })
+
   it("shows the backend's own words for a refusal, as they come", async () => {
     server.use(
       http.post(`/api/events/requests/${SUBMITTED}/cancel`, () =>
