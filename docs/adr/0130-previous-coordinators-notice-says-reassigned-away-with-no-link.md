@@ -39,9 +39,9 @@ The web app shows a notification's `message`, the event's name as a link, the ti
 - A reassignment still makes three notification writes, each rolled back and logged on its own if it fails (ADR-0015). The previous coordinator's is logged as `kind=event_reassigned_away`.
 - Previous coordinators' notices raised before 0058 keep `request_assigned` and their `detail`, so they still read "An Event Coordinator has been assigned to your event request." and still link. They are not rewritten: a notification is a snapshot (ADR-0015), and nothing in a row says which `request_assigned` went to a previous coordinator other than the `detail` text.
 - Any client that reads `link` must handle `null`. The web app is the only one, and its type, page, mock backend and tests change with this record.
-- The integration suite can't raise a reassignment: it has one Event Coordinator account, so there is nobody to reassign to. The previous coordinator's notice is checked by the backend's unit tests and the frontend's mock and component tests, and its contract test waits as a todo.
+- An earlier notice to the same coordinator, such as the `coordinator_assigned` they got when the event became theirs, keeps its link after the event is reassigned away, and opening it answers `404`. SCRUM-28 AC1's exception covers only the notice sent to someone who has just lost access, so those older notices are left as they are.
+- The integration run makes a second Event Coordinator account (`INTEGRATION_SECOND_COORDINATOR_*`), so its contract test reassigns an event for real and checks the previous coordinator's notice has `kind: event_reassigned_away` and `link: null`. The backend's unit tests and the frontend's mock and component tests check it too.
 
 ## Revisit when
 - Another notification goes to someone who has lost access to the event: add its kind to `NO_LINK_KINDS`.
 - The web app gains a title, label or icon per kind: the previous coordinator's must not say "assigned" either (SCRUM-28's clarification).
-- The integration run gains a second Event Coordinator account: turn the todo into a real check.

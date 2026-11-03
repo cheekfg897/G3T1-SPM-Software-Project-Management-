@@ -134,6 +134,11 @@ assigned" is acceptable as long as everything the coordinator sees says they wer
 the event (recorded in
 [ADR-0120](adr/0120-lead-oversight-active-events-and-every-coordinator.md)'s Consequences).**
 
+**Replaced by [ADR-0130](adr/0130-previous-coordinators-notice-says-reassigned-away-with-no-link.md)
+(2 Nov):** SCRUM-28 AC1 and SCRUM-96 changed on 15 Oct, so the previous coordinator now gets
+its own `event_reassigned_away` kind, which says the event was reassigned away and has no
+link. What follows is the decision as it stood before.
+
 By a **`detail` string on the existing `REQUEST_ASSIGNED` notification**, not a new
 `COORDINATOR_UNASSIGNED` kind. This keeps SCRUM-96 migration-free. A Postgres enum can never
 drop a value, so a new kind is a permanent cost.
