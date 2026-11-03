@@ -1,0 +1,71 @@
+@startuml
+title Sequence diagram: coordinator reviews the request and asks for clarification
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API and PostgreSQL are numbered, as in the
+' draw.io and PDF versions.
+' Starting the review notifies nobody and is optional: a submitted request can be decided
+' directly. Asking a question needs the request to be under review. Each status change
+' and its history entry are saved in one commit; the notification is saved after it, and
+' its recipient's Web App fetches it later.
+
+actor "Event\nCoordinator" as coordinator
+actor "Event\nOrganiser" as organiser
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Coordinator reviews the request (assigned to them; starting the review is optional) ==
+coordinator -> web : Open the request
+autonumber
+web -> api : GET /api/events/requests/:reference
+api --> web : The request record: status, equipment, decision
+autonumber stop
+web --> coordinator : Show the request
+
+coordinator -> web : Start the review
+autonumber resume
+web -> api : POST /api/events/requests/:reference/review
+api -> db : Status becomes under_review,\nadd a history entry
+api --> web : The request, now under review
+autonumber stop
+web --> coordinator : Show the status
+
+== Optional: the coordinator needs more information (the request must be under review) ==
+opt Information is missing
+  coordinator -> web : Ask for clarification
+  autonumber resume
+  web -> api : POST /api/events/requests/\n:reference/request-clarification
+  api -> db : Status becomes\nawaiting_clarification, add\na history entry
+  api -> db : Save notification: organiser,\nwith the question
+  api --> web : The request, now awaiting clarification
+  autonumber stop
+  web --> coordinator : Show the status
+
+  organiser -> web : Open notifications
+  autonumber resume
+  web -> api : GET /api/notifications
+  api --> web : Your coordinator asked a question
+  autonumber stop
+  web --> organiser : Show notifications
+
+  organiser -> web : Answer
+  autonumber resume
+  web -> api : POST /api/events/requests/:reference/resubmit
+  api -> db : Status back to under_review,\nadd the answer to the history
+  api -> db : Save notification: coordinator,\nwith the answer
+  api --> web : The request, back under review
+  autonumber stop
+  web --> organiser : Show the status
+
+  coordinator -> web : Open notifications
+  autonumber resume
+  web -> api : GET /api/notifications
+  api --> web : The organiser answered, with the answer
+  autonumber stop
+  web --> coordinator : Show notifications
+end
+@enduml

@@ -1,0 +1,74 @@
+@startuml
+title Sequence diagram: organiser submits, Lead assigns a coordinator
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API and PostgreSQL are numbered, as in the
+' draw.io and PDF versions.
+' Submitting saves the request as "submitted" with no coordinator; it writes no history
+' entry. Assigning saves the coordinator and a history entry in one commit, and the two
+' notifications after it. A notification is only a record in PostgreSQL: nothing is
+' pushed to its recipient (no email, websocket or polling), who fetches it later with
+' GET /api/notifications.
+
+actor "Event\nOrganiser" as organiser
+actor "Coordinator\nLead" as lead
+actor "Event\nCoordinator" as coordinator
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Organiser submits an event request (their account must belong to a client organisation) ==
+organiser -> web : Fill in the request
+autonumber
+web -> api : POST /api/events/requests
+api -> db : Insert event request\n(submitted)
+api -> db : Save notification:\nevery Coordinator Lead
+api --> web : The new request: reference and status
+autonumber stop
+web --> organiser : Show the reference
+
+== Later, the Web App fetches the Lead's saved notifications (nothing is pushed) ==
+lead -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : A new request is waiting in the queue
+autonumber stop
+web --> lead : Show notifications
+
+== Lead opens the unassigned queue (Lead only) ==
+lead -> web : Open the queue
+autonumber resume
+web -> api : GET /api/events/requests/unassigned
+api --> web : Requests waiting for a coordinator
+autonumber stop
+web --> lead : Show the queue
+
+== Lead assigns a coordinator (the request must be waiting in the queue) ==
+lead -> web : Assign a coordinator
+autonumber resume
+web -> api : POST /api/events/requests/\n:reference/coordinator
+api -> db : Set the coordinator, add\na history entry
+api -> db : Save notification: coordinator
+api -> db : Save notification: organiser
+api --> web : The request, with the coordinator's\nname and email
+autonumber stop
+web --> lead : Show the coordinator
+
+== Later, the Web App fetches the coordinator's and organiser's saved notifications (nothing is pushed) ==
+coordinator -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : You have been assigned\nto coordinate an event
+autonumber stop
+web --> coordinator : Show notifications
+
+organiser -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : A coordinator has been\nassigned to your request
+autonumber stop
+web --> organiser : Show notifications
+@enduml
