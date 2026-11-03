@@ -1,0 +1,50 @@
+@startuml
+title Sequence diagram: Safety Officer records the outcome
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API and PostgreSQL are numbered, as in the
+' draw.io and PDF versions.
+' A notification is a record saved in PostgreSQL. Nothing is pushed to its recipient
+' (no email, websocket or polling): the Web App fetches it later with
+' GET /api/notifications, as the last section shows.
+
+actor "Event\nCoordinator" as coordinator
+actor "Safety\nOfficer" as safety
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Safety Officer records the outcome (the event must be in Safety Review) ==
+alt Approved
+  safety -> web : Approve
+  autonumber
+  web -> api : POST /api/events/requests/:reference/safety-outcome
+  api -> db : Record approval:\nthe event stays in Safety Review
+  api -> db : Save notification: coordinator
+  api --> web : The request, still in Safety Review
+  autonumber stop
+  web --> safety : Show the result
+else Rejected or changes requested
+  safety -> web : Reject or request changes
+  autonumber resume
+  web -> api : POST /api/events/requests/:reference/safety-outcome
+  api -> db : Status returns to approved,\nback to planning
+  api -> db : If named: flag venue\narrangements, reopen\nequipment lines
+  api -> db : Save notification: coordinator,\nwith the reason
+  api -> db : Save notification: Venue Staff,\nTechnical Support (if named)
+  api --> web : The request, back in planning
+  autonumber stop
+  web --> safety : Show the result
+end
+
+== Later, the Web App fetches the coordinator's saved notifications (nothing is pushed) ==
+coordinator -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : The safety outcome and its reason
+autonumber stop
+web --> coordinator : Show notifications
+@enduml

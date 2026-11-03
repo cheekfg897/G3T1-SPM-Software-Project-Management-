@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 794 1123" font-family="'Segoe UI', Arial, Helvetica, sans-serif">
+<defs><marker id="arrow-0369a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0369a1"/></marker><marker id="arrow-0e7490" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0e7490"/></marker><marker id="arrow-15803d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#15803d"/></marker><marker id="arrow-4338ca" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4338ca"/></marker><marker id="arrow-475569" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker><marker id="arrow-4d7c0f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4d7c0f"/></marker><marker id="arrow-7c3aed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker></defs>
+<rect width="794" height="1123" fill="#fff"/>
+<text x="12" y="20" font-size="15" font-weight="700" fill="#111827">ConnectSphere: coordinator rejects an event during planning</text>
+<line x1="50" y1="70" x2="50" y2="830" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="135" y1="70" x2="135" y2="830" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="305" y1="70" x2="305" y2="830" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="420" y1="70" x2="420" y2="830" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="535" y1="70" x2="535" y2="830" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="645" y1="70" x2="645" y2="830" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="750" y1="70" x2="750" y2="830" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="12" y="82" width="770" height="22" rx="4" fill="#e5e7eb"/>
+<text x="22" y="97.5" font-size="13" font-weight="700" fill="#111827">Reject an event during planning (it must be Approved or in Safety Review; a reason is required)</text>
+<rect x="12" y="526" width="770" height="22" rx="4" fill="#e5e7eb"/>
+<text x="22" y="541.5" font-size="13" font-weight="700" fill="#111827">After the commit: the notifications are saved</text>
+<rect x="94" y="245" width="692" height="273" fill="none" stroke="#6b7280" stroke-width="1.2"/>
+<path d="M94,245 h53.0 v12 l-6,6 h-47.0 z" fill="#e5e7eb" stroke="#6b7280" stroke-width="1.2"/>
+<text x="100" y="258" font-size="11.5" font-weight="700" fill="#111827">commit</text>
+<text x="155" y="259" font-weight="700" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">[Saved together, in one commit]</text>
+<line x1="50" y1="142" x2="135" y2="142" stroke="#7c3aed" stroke-width="1.8" marker-end="url(#arrow-7c3aed)"/>
+<text x="92.5" y="121" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Reject, with a</text>
+<text x="92.5" y="135" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">reason</text>
+<line x1="144.5" y1="193" x2="305" y2="193" stroke="#7c3aed" stroke-width="1.8" marker-end="url(#arrow-7c3aed)"/>
+<text x="224.75" y="157" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">POST</tspan> /api/events/</text>
+<text x="224.75" y="171" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">requests/:reference/</text>
+<text x="224.75" y="185" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">reject</text>
+<circle cx="135" cy="193" r="9.5" fill="#7c3aed"/>
+<text x="135" y="196.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text>
+<line x1="314.5" y1="233" x2="750" y2="233" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="532.25" y="211" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Check: Approved or in Safety Review,</text>
+<text x="532.25" y="225" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">no pending change request</text>
+<circle cx="305" cy="233" r="9.5" fill="#0369a1"/>
+<text x="305" y="236.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">2</text>
+<line x1="314.5" y1="302" x2="750" y2="302" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="532.25" y="280" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Status becomes rejected, add</text>
+<text x="532.25" y="294" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">decision entry (with the reason)</text>
+<circle cx="305" cy="302" r="9.5" fill="#0369a1"/>
+<text x="305" y="305.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">3</text>
+<line x1="314.5" y1="342" x2="420" y2="342" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="367.25" y="320" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">release_event_</text>
+<text x="367.25" y="334" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">arrangements</text>
+<circle cx="305" cy="342" r="9.5" fill="#0369a1"/>
+<text x="305" y="345.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">4</text>
+<line x1="429.5" y1="382" x2="750" y2="382" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="589.75" y="360" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Withdraw pending, conflicting,</text>
+<text x="589.75" y="374" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">rejected or expired requests</text>
+<circle cx="420" cy="382" r="9.5" fill="#0e7490"/>
+<text x="420" y="385.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">5</text>
+<line x1="429.5" y1="422" x2="750" y2="422" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="589.75" y="400" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Release approved and on_hold</text>
+<text x="589.75" y="414" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">requests, cancel their bookings</text>
+<circle cx="420" cy="422" r="9.5" fill="#0e7490"/>
+<text x="420" y="425.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">6</text>
+<line x1="314.5" y1="452" x2="645" y2="452" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="479.75" y="444" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">release_event_reservations</text>
+<circle cx="305" cy="452" r="9.5" fill="#0369a1"/>
+<text x="305" y="455.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">7</text>
+<line x1="654.5" y1="506" x2="750" y2="506" stroke="#4338ca" stroke-width="1.8" marker-end="url(#arrow-4338ca)"/>
+<text x="702.25" y="470" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Return</text>
+<text x="702.25" y="484" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">reserved</text>
+<text x="702.25" y="498" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">equipment</text>
+<circle cx="645" cy="506" r="9.5" fill="#4338ca"/>
+<text x="645" y="509.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">8</text>
+<line x1="314.5" y1="587" x2="535" y2="587" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="424.75" y="565" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">notify_users</text>
+<text x="424.75" y="579" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">(the organiser, with the reason)</text>
+<circle cx="305" cy="587" r="9.5" fill="#0369a1"/>
+<text x="305" y="590.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">9</text>
+<line x1="544.5" y1="627" x2="750" y2="627" stroke="#4d7c0f" stroke-width="1.8" marker-end="url(#arrow-4d7c0f)"/>
+<text x="647.25" y="605" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Save notification: organiser,</text>
+<text x="647.25" y="619" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">with the reason</text>
+<circle cx="535" cy="627" r="9.5" fill="#4d7c0f"/>
+<text x="535" y="630.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">10</text>
+<line x1="314.5" y1="667" x2="420" y2="667" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="367.25" y="645" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">tell_venue_staff_</text>
+<text x="367.25" y="659" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">of_releases</text>
+<circle cx="305" cy="667" r="9.5" fill="#0369a1"/>
+<text x="305" y="670.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">11</text>
+<line x1="429.5" y1="707" x2="535" y2="707" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="482.25" y="685" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">notify_users,</text>
+<text x="482.25" y="699" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">once per release</text>
+<circle cx="420" cy="707" r="9.5" fill="#0e7490"/>
+<text x="420" y="710.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">12</text>
+<line x1="544.5" y1="761" x2="750" y2="761" stroke="#4d7c0f" stroke-width="1.8" marker-end="url(#arrow-4d7c0f)"/>
+<text x="647.25" y="725" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Save one booking_released notice</text>
+<text x="647.25" y="739" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">per release, for every</text>
+<text x="647.25" y="753" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Venue Staff user</text>
+<circle cx="535" cy="761" r="9.5" fill="#4d7c0f"/>
+<text x="535" y="764.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">13</text>
+<line x1="295.5" y1="787" x2="135" y2="787" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="215.25" y="779" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">The request, now rejected</text>
+<circle cx="305" cy="787" r="9.5" fill="#0369a1"/>
+<text x="305" y="790.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">14</text>
+<line x1="135" y1="826" x2="50" y2="826" stroke="#7c3aed" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-7c3aed)"/>
+<text x="92.5" y="805" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show the</text>
+<text x="92.5" y="819" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">request</text>
+<rect x="8.0" y="30" width="84" height="40" rx="6" fill="#fff" stroke="#7c3aed" stroke-width="2.2"/>
+<text x="50" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Event</text>
+<text x="50" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Coordinator</text>
+<rect x="102.0" y="30" width="66" height="40" rx="6" fill="#fff" stroke="#475569" stroke-width="2.2"/>
+<text x="135" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Web App</text>
+<text x="135" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">(React)</text>
+<rect x="273.0" y="30" width="64" height="40" rx="6" fill="#fff" stroke="#0369a1" stroke-width="2.2"/>
+<text x="305" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">events</text>
+<text x="305" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">module</text>
+<rect x="388.0" y="30" width="64" height="40" rx="6" fill="#fff" stroke="#0e7490" stroke-width="2.2"/>
+<text x="420" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">venue</text>
+<text x="420" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">module</text>
+<rect x="489.0" y="30" width="92" height="40" rx="6" fill="#fff" stroke="#4d7c0f" stroke-width="2.2"/>
+<text x="535" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">notifications</text>
+<text x="535" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">module</text>
+<rect x="609.0" y="30" width="72" height="40" rx="6" fill="#fff" stroke="#4338ca" stroke-width="2.2"/>
+<text x="645" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">equipment</text>
+<text x="645" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">module</text>
+<rect x="710.0" y="30" width="80" height="40" rx="6" fill="#fff" stroke="#15803d" stroke-width="2.2"/>
+<text x="750" y="55" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">PostgreSQL</text>
+<text x="12" y="850" font-size="12" fill="#6b7280">Dashed arrow: a response. Arrows into PostgreSQL: what is saved. Arrows with no number: what the person does or sees in the Web App.</text>
+<text x="12" y="866" font-size="12" fill="#6b7280">Arrows between modules: a call to the other module&#x27;s service function, in the same process (no network hop).</text>
+</svg>

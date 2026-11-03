@@ -1,0 +1,75 @@
+<mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1400" pageHeight="1220" math="0" shadow="0" background="#ffffff">
+ <root>
+  <mxCell id="0" />
+  <mxCell id="1" parent="0" />
+  <mxCell id="organiser" value="&lt;b style=&quot;font-size:19px&quot;&gt;Event Organiser&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;Client representative who requests events&lt;/span&gt;" style="whiteSpace=wrap;html=1;align=center;metaEdit=1;shape=mxgraph.c4.person2;fillColor=#6c6477;strokeColor=#4d4d4d;fontColor=#ffffff;" vertex="1" parent="1">
+   <mxGeometry x="100" y="80" width="260" height="200" as="geometry" />
+  </mxCell>
+  <mxCell id="lead" value="&lt;b style=&quot;font-size:19px&quot;&gt;Event Coordinator Lead&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;Assigns new requests and oversees coordinators&lt;/span&gt;" style="whiteSpace=wrap;html=1;align=center;metaEdit=1;shape=mxgraph.c4.person2;fillColor=#08427b;strokeColor=#073b6f;fontColor=#ffffff;" vertex="1" parent="1">
+   <mxGeometry x="400" y="80" width="260" height="200" as="geometry" />
+  </mxCell>
+  <mxCell id="coordinator" value="&lt;b style=&quot;font-size:19px&quot;&gt;Event Coordinator&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;Plans an assigned event&lt;/span&gt;" style="whiteSpace=wrap;html=1;align=center;metaEdit=1;shape=mxgraph.c4.person2;fillColor=#08427b;strokeColor=#073b6f;fontColor=#ffffff;" vertex="1" parent="1">
+   <mxGeometry x="700" y="80" width="260" height="200" as="geometry" />
+  </mxCell>
+  <mxCell id="attendee" value="&lt;b style=&quot;font-size:19px&quot;&gt;Attendee&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;Registers for confirmed events&lt;/span&gt;" style="whiteSpace=wrap;html=1;align=center;metaEdit=1;shape=mxgraph.c4.person2;fillColor=#6c6477;strokeColor=#4d4d4d;fontColor=#ffffff;" vertex="1" parent="1">
+   <mxGeometry x="1000" y="80" width="260" height="200" as="geometry" />
+  </mxCell>
+  <mxCell id="system" value="&lt;b style=&quot;font-size:24px&quot;&gt;ConnectSphere&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;[Software system]&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;Event requests, venue booking, equipment reservation, safety review, registration and in-app notifications&lt;/span&gt;" style="whiteSpace=wrap;html=1;align=center;metaEdit=1;rounded=1;arcSize=10;fillColor=#1168bd;strokeColor=#0b4884;fontColor=#ffffff;" vertex="1" parent="1">
+   <mxGeometry x="100" y="500" width="1160" height="140" as="geometry" />
+  </mxCell>
+  <mxCell id="venue" value="&lt;b style=&quot;font-size:19px&quot;&gt;Venue Staff&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;Decides venue booking requests and manages venues&lt;/span&gt;" style="whiteSpace=wrap;html=1;align=center;metaEdit=1;shape=mxgraph.c4.person2;fillColor=#08427b;strokeColor=#073b6f;fontColor=#ffffff;" vertex="1" parent="1">
+   <mxGeometry x="100" y="860" width="260" height="200" as="geometry" />
+  </mxCell>
+  <mxCell id="support" value="&lt;b style=&quot;font-size:19px&quot;&gt;Technical Support Staff&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;Reviews and reserves equipment&lt;/span&gt;" style="whiteSpace=wrap;html=1;align=center;metaEdit=1;shape=mxgraph.c4.person2;fillColor=#08427b;strokeColor=#073b6f;fontColor=#ffffff;" vertex="1" parent="1">
+   <mxGeometry x="400" y="860" width="260" height="200" as="geometry" />
+  </mxCell>
+  <mxCell id="safety" value="&lt;b style=&quot;font-size:19px&quot;&gt;Safety Officer&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;Records the safety check&lt;/span&gt;" style="whiteSpace=wrap;html=1;align=center;metaEdit=1;shape=mxgraph.c4.person2;fillColor=#08427b;strokeColor=#073b6f;fontColor=#ffffff;" vertex="1" parent="1">
+   <mxGeometry x="700" y="860" width="260" height="200" as="geometry" />
+  </mxCell>
+  <mxCell id="edge1" value="Submits requests,&lt;br&gt;answers clarifications,&lt;br&gt;is notified" style="edgeStyle=none;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#707070;strokeWidth=1.5;fontColor=#333333;fontSize=15;labelBackgroundColor=#ffffff;startArrow=classic;startFill=1;exitX=0.5000;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.1121;entryY=0.0000;entryDx=0;entryDy=0;" edge="1" parent="1" source="organiser" target="system">
+   <mxGeometry relative="1" as="geometry" />
+  </mxCell>
+  <mxCell id="edge2" value="Assigns and reassigns&lt;br&gt;coordinators, is notified&lt;br&gt;of new requests" style="edgeStyle=none;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#707070;strokeWidth=1.5;fontColor=#333333;fontSize=15;labelBackgroundColor=#ffffff;startArrow=classic;startFill=1;exitX=0.5000;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.3707;entryY=0.0000;entryDx=0;entryDy=0;" edge="1" parent="1" source="lead" target="system">
+   <mxGeometry relative="1" as="geometry" />
+  </mxCell>
+  <mxCell id="edge3" value="Decides requests, asks&lt;br&gt;clarifications, requests&lt;br&gt;venues and equipment,&lt;br&gt;confirms" style="edgeStyle=none;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#707070;strokeWidth=1.5;fontColor=#333333;fontSize=15;labelBackgroundColor=#ffffff;startArrow=classic;startFill=1;exitX=0.5000;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.6293;entryY=0.0000;entryDx=0;entryDy=0;" edge="1" parent="1" source="coordinator" target="system">
+   <mxGeometry relative="1" as="geometry" />
+  </mxCell>
+  <mxCell id="edge4" value="Browses events,&lt;br&gt;registers, withdraws" style="edgeStyle=none;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#707070;strokeWidth=1.5;fontColor=#333333;fontSize=15;labelBackgroundColor=#ffffff;exitX=0.5000;exitY=1.0000;exitDx=0;exitDy=0;entryX=0.8879;entryY=0.0000;entryDx=0;entryDy=0;" edge="1" parent="1" source="attendee" target="system">
+   <mxGeometry relative="1" as="geometry" />
+  </mxCell>
+  <mxCell id="edge5" value="Approves, rejects or&lt;br&gt;holds bookings, manages&lt;br&gt;venues and blocks" style="edgeStyle=none;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#707070;strokeWidth=1.5;fontColor=#333333;fontSize=15;labelBackgroundColor=#ffffff;startArrow=classic;startFill=1;exitX=0.5000;exitY=0.0000;exitDx=0;exitDy=0;entryX=0.1121;entryY=1.0000;entryDx=0;entryDy=0;" edge="1" parent="1" source="venue" target="system">
+   <mxGeometry relative="1" as="geometry" />
+  </mxCell>
+  <mxCell id="edge6" value="Reserves equipment,&lt;br&gt;records outcomes, manages&lt;br&gt;the equipment catalogue" style="edgeStyle=none;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#707070;strokeWidth=1.5;fontColor=#333333;fontSize=15;labelBackgroundColor=#ffffff;startArrow=classic;startFill=1;exitX=0.5000;exitY=0.0000;exitDx=0;exitDy=0;entryX=0.3707;entryY=1.0000;entryDx=0;entryDy=0;" edge="1" parent="1" source="support" target="system">
+   <mxGeometry relative="1" as="geometry" />
+  </mxCell>
+  <mxCell id="edge7" value="Records the safety check,&lt;br&gt;is notified of reviews" style="edgeStyle=none;rounded=0;html=1;endArrow=classic;endFill=1;strokeColor=#707070;strokeWidth=1.5;fontColor=#333333;fontSize=15;labelBackgroundColor=#ffffff;startArrow=classic;startFill=1;exitX=0.5000;exitY=0.0000;exitDx=0;exitDy=0;entryX=0.6293;entryY=1.0000;entryDx=0;entryDy=0;" edge="1" parent="1" source="safety" target="system">
+   <mxGeometry relative="1" as="geometry" />
+  </mxCell>
+  <mxCell id="title" value="System context diagram: ConnectSphere" style="text;html=1;whiteSpace=wrap;align=left;fontSize=28;fontStyle=1;fontColor=#222222;" vertex="1" parent="1">
+   <mxGeometry x="0" y="10" width="900" height="44" as="geometry" />
+  </mxCell>
+  <mxCell id="swatch0" value="" style="rounded=1;fillColor=#6c6477;strokeColor=none;" vertex="1" parent="1">
+   <mxGeometry x="100" y="1132" width="28" height="20" as="geometry" />
+  </mxCell>
+  <mxCell id="legend0" value="External person" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=15;fontColor=#333333;" vertex="1" parent="1">
+   <mxGeometry x="136" y="1130" width="146" height="24" as="geometry" />
+  </mxCell>
+  <mxCell id="swatch1" value="" style="rounded=1;fillColor=#08427b;strokeColor=none;" vertex="1" parent="1">
+   <mxGeometry x="340" y="1132" width="28" height="20" as="geometry" />
+  </mxCell>
+  <mxCell id="legend1" value="ConnectSphere staff" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=15;fontColor=#333333;" vertex="1" parent="1">
+   <mxGeometry x="376" y="1130" width="285" height="24" as="geometry" />
+  </mxCell>
+  <mxCell id="swatch2" value="" style="rounded=1;fillColor=#1168bd;strokeColor=none;" vertex="1" parent="1">
+   <mxGeometry x="710" y="1132" width="28" height="20" as="geometry" />
+  </mxCell>
+  <mxCell id="legend2" value="ConnectSphere (software system)" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=15;fontColor=#333333;" vertex="1" parent="1">
+   <mxGeometry x="746" y="1130" width="285" height="24" as="geometry" />
+  </mxCell>
+  <mxCell id="legend3" value="Arrows with a head at both ends: the system also sends that role in-app notifications" style="text;html=1;whiteSpace=wrap;align=left;verticalAlign=middle;fontSize=15;fontColor=#333333;" vertex="1" parent="1">
+   <mxGeometry x="100" y="1170" width="755" height="24" as="geometry" />
+  </mxCell>
+ </root>
+</mxGraphModel>

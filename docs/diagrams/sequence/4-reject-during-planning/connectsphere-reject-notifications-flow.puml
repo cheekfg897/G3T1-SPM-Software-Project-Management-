@@ -1,0 +1,34 @@
+@startuml
+title Sequence diagram: who is told when an event is rejected
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API are numbered, as in the draw.io and PDF
+' versions.
+' A notification is a record saved in PostgreSQL when the event is rejected. Nothing is
+' pushed to its recipient (no email, websocket or polling): the Web App fetches it
+' later with GET /api/notifications.
+
+actor "Event\nOrganiser" as organiser
+actor "Venue\nStaff" as venue
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Later, the Web App fetches each recipient's saved notifications (nothing is pushed) ==
+organiser -> web : Open notifications
+autonumber
+web -> api : GET /api/notifications
+api --> web : Your event request was rejected, with the reason
+autonumber stop
+web --> organiser : Show notifications
+
+venue -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : A venue booking or hold was released
+autonumber stop
+web --> venue : Show notifications
+@enduml

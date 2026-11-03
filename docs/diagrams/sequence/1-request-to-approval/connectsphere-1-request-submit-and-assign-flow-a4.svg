@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 794 1123" font-family="'Segoe UI', Arial, Helvetica, sans-serif">
+<defs><marker id="arrow-0369a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0369a1"/></marker><marker id="arrow-0e7490" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0e7490"/></marker><marker id="arrow-15803d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#15803d"/></marker><marker id="arrow-475569" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker><marker id="arrow-7c3aed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker><marker id="arrow-a16207" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a16207"/></marker></defs>
+<rect width="794" height="1123" fill="#fff"/>
+<text x="12" y="20" font-size="15" font-weight="700" fill="#111827">ConnectSphere: organiser submits, Lead assigns a coordinator</text>
+<line x1="44" y1="70" x2="44" y2="1066" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="130" y1="70" x2="130" y2="1066" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="218" y1="70" x2="218" y2="1066" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="306" y1="70" x2="306" y2="1066" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="560" y1="70" x2="560" y2="1066" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="750" y1="70" x2="750" y2="1066" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="12" y="82" width="770" height="22" rx="4" fill="#e5e7eb"/>
+<text x="22" y="97.5" font-size="13" font-weight="700" fill="#111827">Organiser submits an event request (their account must belong to a client organisation)</text>
+<rect x="12" y="289" width="770" height="22" rx="4" fill="#e5e7eb"/>
+<text x="22" y="304.5" font-size="13" font-weight="700" fill="#111827">Later, the Web App fetches the Lead&#x27;s saved notifications (nothing is pushed)</text>
+<rect x="12" y="416" width="770" height="22" rx="4" fill="#e5e7eb"/>
+<text x="22" y="431.5" font-size="13" font-weight="700" fill="#111827">Lead opens the unassigned queue (Lead only)</text>
+<rect x="12" y="543" width="770" height="22" rx="4" fill="#e5e7eb"/>
+<text x="22" y="558.5" font-size="13" font-weight="700" fill="#111827">Lead assigns a coordinator (the request must be waiting in the queue)</text>
+<rect x="12" y="790" width="770" height="22" rx="4" fill="#e5e7eb"/>
+<text x="22" y="805.5" font-size="13" font-weight="700" fill="#111827">Later, the Web App fetches the coordinator&#x27;s and organiser&#x27;s saved notifications (nothing is pushed)</text>
+<line x1="44" y1="128" x2="306" y2="128" stroke="#a16207" stroke-width="1.8" marker-end="url(#arrow-a16207)"/>
+<text x="175.0" y="121" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Fill in the request</text>
+<line x1="315.5" y1="151" x2="560" y2="151" stroke="#a16207" stroke-width="1.8" marker-end="url(#arrow-a16207)"/>
+<text x="437.75" y="143" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">POST</tspan> /api/events/requests</text>
+<circle cx="306" cy="151" r="9.5" fill="#a16207"/>
+<text x="306" y="154.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text>
+<line x1="569.5" y1="191" x2="750" y2="191" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="659.75" y="169" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Insert event request</text>
+<text x="659.75" y="183" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">(submitted)</text>
+<circle cx="560" cy="191" r="9.5" fill="#0369a1"/>
+<text x="560" y="194.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">2</text>
+<line x1="569.5" y1="231" x2="750" y2="231" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="659.75" y="209" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Save notification:</text>
+<text x="659.75" y="223" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">every Coordinator Lead</text>
+<circle cx="560" cy="231" r="9.5" fill="#0369a1"/>
+<text x="560" y="234.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">3</text>
+<line x1="550.5" y1="257" x2="306" y2="257" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="428.25" y="249" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">The new request: reference and status</text>
+<circle cx="560" cy="257" r="9.5" fill="#0369a1"/>
+<text x="560" y="260.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">4</text>
+<line x1="306" y1="282" x2="44" y2="282" stroke="#a16207" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-a16207)"/>
+<text x="175.0" y="275" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show the reference</text>
+<line x1="130" y1="335" x2="306" y2="335" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="218.0" y="328" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Open notifications</text>
+<line x1="315.5" y1="358" x2="560" y2="358" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="437.75" y="350" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">GET</tspan> /api/notifications</text>
+<circle cx="306" cy="358" r="9.5" fill="#0e7490"/>
+<text x="306" y="361.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">5</text>
+<line x1="550.5" y1="384" x2="306" y2="384" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="428.25" y="376" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">A new request is waiting in the queue</text>
+<circle cx="560" cy="384" r="9.5" fill="#0369a1"/>
+<text x="560" y="387.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">6</text>
+<line x1="306" y1="409" x2="130" y2="409" stroke="#0e7490" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0e7490)"/>
+<text x="218.0" y="402" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show notifications</text>
+<line x1="130" y1="462" x2="306" y2="462" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="218.0" y="455" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Open the queue</text>
+<line x1="315.5" y1="485" x2="560" y2="485" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="437.75" y="477" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">GET</tspan> /api/events/requests/unassigned</text>
+<circle cx="306" cy="485" r="9.5" fill="#0e7490"/>
+<text x="306" y="488.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">7</text>
+<line x1="550.5" y1="511" x2="306" y2="511" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="428.25" y="503" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Requests waiting for a coordinator</text>
+<circle cx="560" cy="511" r="9.5" fill="#0369a1"/>
+<text x="560" y="514.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">8</text>
+<line x1="306" y1="536" x2="130" y2="536" stroke="#0e7490" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0e7490)"/>
+<text x="218.0" y="529" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show the queue</text>
+<line x1="130" y1="589" x2="306" y2="589" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="218.0" y="582" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Assign a coordinator</text>
+<line x1="315.5" y1="626" x2="560" y2="626" stroke="#0e7490" stroke-width="1.8" marker-end="url(#arrow-0e7490)"/>
+<text x="437.75" y="604" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">POST</tspan> /api/events/requests/</text>
+<text x="437.75" y="618" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">:reference/coordinator</text>
+<circle cx="306" cy="626" r="9.5" fill="#0e7490"/>
+<text x="306" y="629.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">9</text>
+<line x1="569.5" y1="666" x2="750" y2="666" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="659.75" y="644" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Set the coordinator, add</text>
+<text x="659.75" y="658" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">a history entry</text>
+<circle cx="560" cy="666" r="9.5" fill="#0369a1"/>
+<text x="560" y="669.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">10</text>
+<line x1="569.5" y1="692" x2="750" y2="692" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="659.75" y="684" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Save notification: coordinator</text>
+<circle cx="560" cy="692" r="9.5" fill="#0369a1"/>
+<text x="560" y="695.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">11</text>
+<line x1="569.5" y1="718" x2="750" y2="718" stroke="#0369a1" stroke-width="1.8" marker-end="url(#arrow-0369a1)"/>
+<text x="659.75" y="710" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Save notification: organiser</text>
+<circle cx="560" cy="718" r="9.5" fill="#0369a1"/>
+<text x="560" y="721.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">12</text>
+<line x1="550.5" y1="758" x2="306" y2="758" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="428.25" y="736" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">The request, with the coordinator&#x27;s</text>
+<text x="428.25" y="750" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">name and email</text>
+<circle cx="560" cy="758" r="9.5" fill="#0369a1"/>
+<text x="560" y="761.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">13</text>
+<line x1="306" y1="783" x2="130" y2="783" stroke="#0e7490" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0e7490)"/>
+<text x="218.0" y="776" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show the coordinator</text>
+<line x1="218" y1="850" x2="306" y2="850" stroke="#7c3aed" stroke-width="1.8" marker-end="url(#arrow-7c3aed)"/>
+<text x="262.0" y="829" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Open</text>
+<text x="262.0" y="843" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">notifications</text>
+<line x1="315.5" y1="873" x2="560" y2="873" stroke="#7c3aed" stroke-width="1.8" marker-end="url(#arrow-7c3aed)"/>
+<text x="437.75" y="865" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">GET</tspan> /api/notifications</text>
+<circle cx="306" cy="873" r="9.5" fill="#7c3aed"/>
+<text x="306" y="876.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">14</text>
+<line x1="550.5" y1="913" x2="306" y2="913" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="428.25" y="891" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">You have been assigned</text>
+<text x="428.25" y="905" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">to coordinate an event</text>
+<circle cx="560" cy="913" r="9.5" fill="#0369a1"/>
+<text x="560" y="916.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">15</text>
+<line x1="306" y1="952" x2="218" y2="952" stroke="#7c3aed" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-7c3aed)"/>
+<text x="262.0" y="931" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show</text>
+<text x="262.0" y="945" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">notifications</text>
+<line x1="44" y1="974" x2="306" y2="974" stroke="#a16207" stroke-width="1.8" marker-end="url(#arrow-a16207)"/>
+<text x="175.0" y="967" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Open notifications</text>
+<line x1="315.5" y1="997" x2="560" y2="997" stroke="#a16207" stroke-width="1.8" marker-end="url(#arrow-a16207)"/>
+<text x="437.75" y="989" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">GET</tspan> /api/notifications</text>
+<circle cx="306" cy="997" r="9.5" fill="#a16207"/>
+<text x="306" y="1000.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">16</text>
+<line x1="550.5" y1="1037" x2="306" y2="1037" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="428.25" y="1015" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">A coordinator has been</text>
+<text x="428.25" y="1029" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">assigned to your request</text>
+<circle cx="560" cy="1037" r="9.5" fill="#0369a1"/>
+<text x="560" y="1040.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">17</text>
+<line x1="306" y1="1062" x2="44" y2="1062" stroke="#a16207" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-a16207)"/>
+<text x="175.0" y="1055" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show notifications</text>
+<rect x="5.0" y="30" width="78" height="40" rx="6" fill="#fff" stroke="#a16207" stroke-width="2.2"/>
+<text x="44" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Event</text>
+<text x="44" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Organiser</text>
+<rect x="88.0" y="30" width="84" height="40" rx="6" fill="#fff" stroke="#0e7490" stroke-width="2.2"/>
+<text x="130" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Coordinator</text>
+<text x="130" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Lead</text>
+<rect x="176.0" y="30" width="84" height="40" rx="6" fill="#fff" stroke="#7c3aed" stroke-width="2.2"/>
+<text x="218" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Event</text>
+<text x="218" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Coordinator</text>
+<rect x="273.0" y="30" width="66" height="40" rx="6" fill="#fff" stroke="#475569" stroke-width="2.2"/>
+<text x="306" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Web App</text>
+<text x="306" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">(React)</text>
+<rect x="510.0" y="30" width="100" height="40" rx="6" fill="#fff" stroke="#0369a1" stroke-width="2.2"/>
+<text x="560" y="55" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Backend API</text>
+<rect x="710.0" y="30" width="80" height="40" rx="6" fill="#fff" stroke="#15803d" stroke-width="2.2"/>
+<text x="750" y="55" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">PostgreSQL</text>
+<text x="12" y="1086" font-size="12" fill="#6b7280">Dashed arrow: a response. Arrows into PostgreSQL: what is saved. Arrows with no number: what the person does or sees in the Web App.</text>
+</svg>

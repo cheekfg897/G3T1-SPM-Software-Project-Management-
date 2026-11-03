@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 794 1123" font-family="'Segoe UI', Arial, Helvetica, sans-serif">
+<defs><marker id="arrow-0369a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0369a1"/></marker><marker id="arrow-0f766e" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0f766e"/></marker><marker id="arrow-15803d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#15803d"/></marker><marker id="arrow-475569" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker><marker id="arrow-a16207" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a16207"/></marker></defs>
+<rect width="794" height="1123" fill="#fff"/>
+<text x="12" y="20" font-size="15" font-weight="700" fill="#111827">ConnectSphere: who is told when an event is rejected</text>
+<line x1="50" y1="70" x2="50" y2="330" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="132" y1="70" x2="132" y2="330" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="232" y1="70" x2="232" y2="330" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="544" y1="70" x2="544" y2="330" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<line x1="748" y1="70" x2="748" y2="330" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="12" y="82" width="770" height="22" rx="4" fill="#e5e7eb"/>
+<text x="22" y="97.5" font-size="13" font-weight="700" fill="#111827">Later, the Web App fetches each recipient&#x27;s saved notifications (nothing is pushed)</text>
+<line x1="50" y1="128" x2="232" y2="128" stroke="#a16207" stroke-width="1.8" marker-end="url(#arrow-a16207)"/>
+<text x="141.0" y="121" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Open notifications</text>
+<line x1="241.5" y1="151" x2="544" y2="151" stroke="#a16207" stroke-width="1.8" marker-end="url(#arrow-a16207)"/>
+<text x="392.75" y="143" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">GET</tspan> /api/notifications</text>
+<circle cx="232" cy="151" r="9.5" fill="#a16207"/>
+<text x="232" y="154.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">1</text>
+<line x1="534.5" y1="177" x2="232" y2="177" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="383.25" y="169" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Your event request was rejected, with the reason</text>
+<circle cx="544" cy="177" r="9.5" fill="#0369a1"/>
+<text x="544" y="180.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">2</text>
+<line x1="232" y1="202" x2="50" y2="202" stroke="#a16207" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-a16207)"/>
+<text x="141.0" y="195" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show notifications</text>
+<line x1="132" y1="238" x2="232" y2="238" stroke="#0f766e" stroke-width="1.8" marker-end="url(#arrow-0f766e)"/>
+<text x="182.0" y="217" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Open</text>
+<text x="182.0" y="231" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">notifications</text>
+<line x1="241.5" y1="261" x2="544" y2="261" stroke="#0f766e" stroke-width="1.8" marker-end="url(#arrow-0f766e)"/>
+<text x="392.75" y="253" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke"><tspan font-weight="700">GET</tspan> /api/notifications</text>
+<circle cx="232" cy="261" r="9.5" fill="#0f766e"/>
+<text x="232" y="264.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">3</text>
+<line x1="534.5" y1="287" x2="232" y2="287" stroke="#0369a1" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0369a1)"/>
+<text x="383.25" y="279" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">A venue booking or hold was released</text>
+<circle cx="544" cy="287" r="9.5" fill="#0369a1"/>
+<text x="544" y="290.7" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff">4</text>
+<line x1="232" y1="326" x2="132" y2="326" stroke="#0f766e" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow-0f766e)"/>
+<text x="182.0" y="305" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Show</text>
+<text x="182.0" y="319" text-anchor="middle" font-size="12.5" fill="#111827" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">notifications</text>
+<rect x="11.0" y="30" width="78" height="40" rx="6" fill="#fff" stroke="#a16207" stroke-width="2.2"/>
+<text x="50" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Event</text>
+<text x="50" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Organiser</text>
+<rect x="100.0" y="30" width="64" height="40" rx="6" fill="#fff" stroke="#0f766e" stroke-width="2.2"/>
+<text x="132" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Venue</text>
+<text x="132" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Staff</text>
+<rect x="199.0" y="30" width="66" height="40" rx="6" fill="#fff" stroke="#475569" stroke-width="2.2"/>
+<text x="232" y="47" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Web App</text>
+<text x="232" y="62" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">(React)</text>
+<rect x="494.0" y="30" width="100" height="40" rx="6" fill="#fff" stroke="#0369a1" stroke-width="2.2"/>
+<text x="544" y="55" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">Backend API</text>
+<rect x="708.0" y="30" width="80" height="40" rx="6" fill="#fff" stroke="#15803d" stroke-width="2.2"/>
+<text x="748" y="55" text-anchor="middle" font-size="12.5" font-weight="700" fill="#111827">PostgreSQL</text>
+<text x="12" y="350" font-size="12" fill="#6b7280">Dashed arrow: a response. Arrows into PostgreSQL: what is saved. Arrows with no number: what the person does or sees in the Web App.</text>
+</svg>

@@ -1,0 +1,45 @@
+@startuml
+title Sequence diagram: send an event for a safety check
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API and PostgreSQL are numbered, as in the
+' draw.io and PDF versions.
+' A notification is a record saved in PostgreSQL. Nothing is pushed to its recipient
+' (no email, websocket or polling): the Web App fetches it later with
+' GET /api/notifications, as the second section shows.
+
+actor "Event\nCoordinator" as coordinator
+actor "Safety\nOfficer" as safety
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Send an Approved event to Safety Review (its venues and equipment must be settled) ==
+coordinator -> web : Send for safety check
+autonumber
+web -> api : POST /api/events/requests/:reference/safety-review
+api -> db : Status becomes safety_review
+api -> db : Save notification:\nall Safety Officers
+api --> web : The request, now in Safety Review
+autonumber stop
+web --> coordinator : Show the request
+
+== Later, the Web App fetches the Safety Officers' saved notifications (nothing is pushed) ==
+safety -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : An event is waiting for your safety review
+autonumber stop
+web --> safety : Show notifications
+
+== Safety Officer opens the events in Safety Review ==
+safety -> web : Open the list
+autonumber resume
+web -> api : GET /api/events/requests/awaiting-safety-review
+api --> web : Events in Safety Review, soonest first
+autonumber stop
+web --> safety : Show the events
+@enduml
