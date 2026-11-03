@@ -10,6 +10,7 @@ import {
 } from '@/features/equipment/api'
 import {
   cancelEvent,
+  decideChangeRequest,
   fetchEventHistory,
   fetchEventRequest,
   raiseChangeRequest,
@@ -266,7 +267,8 @@ describe('SCRUM-61 mock: a cancellation reaches the venue and equipment mocks', 
 /**
  * The mock's cancellation closes the event's Pending change request as the backend's does
  * (SCRUM-56 AC9, ADR-0122 decision 18), in the change request store the record reads. Omar
- * submitted EVR-7K2M9QXA, under review, so he may raise one on it.
+ * submitted EVR-7K2M9QXA, under review, so he may raise one on it, and Chloe, its coordinator,
+ * may decide it.
  */
 describe("SCRUM-61 mock: a cancellation withdraws the event's Pending change request", () => {
   const PARTNER_SUMMIT = 'EVR-7K2M9QXA'
@@ -301,5 +303,17 @@ describe("SCRUM-61 mock: a cancellation withdraws the event's Pending change req
     await cancelEvent(PARTNER_SUMMIT, { reason: REASON })
 
     expect(await changeRequestsOnRecord()).toEqual([withdrawn])
+  })
+
+  it('leaves one its coordinator had approved as it was', async () => {
+    signInAs(OMAR)
+    const raised = await raiseChangeRequest(PARTNER_SUMMIT, BIGGER)
+    signInAs(CHLOE)
+    const approved = await decideChangeRequest(PARTNER_SUMMIT, raised.id, { outcome: 'approved' })
+    signInAs(OMAR)
+
+    await cancelEvent(PARTNER_SUMMIT, { reason: REASON })
+
+    expect(await changeRequestsOnRecord()).toEqual([approved])
   })
 })
