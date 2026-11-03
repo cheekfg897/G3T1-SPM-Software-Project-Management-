@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from sqlalchemy import Connection
 from sqlalchemy.exc import OperationalError
 
 from app.modules.events.models import (
@@ -29,6 +30,8 @@ from app.modules.venue.services import ArrangementForRecord
 Arrange = Callable[[BookingRequestStatus], VenueBookingRequest]
 SaveArrangement = Callable[[EventRequest, Venue, BookingRequestStatus], VenueBookingRequest]
 AddLine = Callable[[int | None], EventEquipmentLine]
+#: The ``on_event_row_lock`` fixture's callable (SCRUM-56, SCRUM-61).
+OnEventRowLock = Callable[[Callable[[Connection], None]], None]
 
 
 class DriverError(Exception):

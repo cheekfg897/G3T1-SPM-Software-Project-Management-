@@ -18,17 +18,18 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 import pytest
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.common.errors import ConflictError, NotFoundError, ValidationError
 from app.modules.auth.models import User
 from app.modules.auth.permissions import Role
 from app.modules.equipment import services as equipment_services
-from app.modules.equipment.models import EquipmentType
+from app.modules.equipment.models import EquipmentReservation, EquipmentType
 from app.modules.events import services as events_services
 from app.modules.events.models import (
     EventEquipmentLine,
@@ -39,6 +40,7 @@ from app.modules.events.models import (
 from app.modules.events.schemas import CANCELLATION_REASON_REQUIRED_MESSAGE
 from app.modules.events.services import (
     EventCancellationNotAllowedError,
+    EventEdit,
     OrganiserWithoutOrganisationError,
     cancel_event_request,
     list_equipment_requests_awaiting_action,
@@ -58,6 +60,7 @@ from tests.events.cases import (
     NOT_HOLDING_ARRANGEMENT_STATUSES,
     AddLine,
     Arrange,
+    OnEventRowLock,
     released_detail,
 )
 from tests.venue.conftest import locked_request_reads, reload_request, set_status_underneath
@@ -68,6 +71,7 @@ HistoryOf = Callable[[int], list[tuple[EventHistoryKind, int | None, dict[str, A
 ReloadEventRequest = Callable[[int], EventRequest]
 NotificationsOf = Callable[[int], list[tuple[Any, ...]]]
 SetStatus = Callable[[EventRequestStatus], None]
+EditEvent = Callable[[int, dict[str, Any] | None], EventEdit]
 
 REFERENCE = "EVR-AAAAAAAA"
 ORGANISER_ID = 7
@@ -167,6 +171,48 @@ def _free_units(equipment_type: EquipmentType, session: Session) -> int:
     return equipment_services.available_quantity(
         equipment_type.id, EVENT_STARTS_AT, EVENT_ENDS_AT, session=session
     )
+
+
+def _reserve_two(equipment_type: EquipmentType, session: Session) -> None:
+    """Technical Support reserve two units of the type for the event (SCRUM-46)."""
+    equipment_services.reserve_equipment(
+        REFERENCE,
+        {"equipment_type_id": equipment_type.id, "quantity": 2},
+        reserved_by=TECHNICAL_SUPPORT_ID,
+        session=session,
+    )
+
+
+def _confirm_move(equipment_type: EquipmentType, session: Session) -> None:
+    """Technical Support confirm the marked reservations of the type (SCRUM-60)."""
+    equipment_services.confirm_reservation_move(
+        REFERENCE, equipment_type.id, confirmed_by=TECHNICAL_SUPPORT_ID, session=session
+    )
+
+
+def _cancelled_once_locked(event_request: EventRequest, on_event_row_lock: OnEventRowLock) -> None:
+    """Cancel the event in the database the moment its row is locked.
+
+    As the organiser's cancellation committing while the caller waited for the lock.
+    """
+    cancelled = (
+        update(EventRequest)
+        .where(EventRequest.id == event_request.id)
+        .values(status=EventRequestStatus.CANCELLED)
+    )
+    on_event_row_lock(lambda connection: connection.execute(cancelled))
+
+
+def _tables_locked(statements: list[str]) -> list[str]:
+    """The tables whose rows ``statements`` lock, in the order they lock them."""
+    tables = []
+    for statement in statements:
+        if "FOR UPDATE" not in statement and "FOR NO KEY UPDATE" not in statement:
+            continue
+        for table in ("equipment_types", "event_requests"):
+            if f"FROM {table}" in statement:
+                tables.append(table)
+    return tables
 
 
 def _notices_of_kind(
@@ -428,6 +474,111 @@ def test_its_reserved_equipment_returns_to_the_available_quantity(
     _cancel(db_session)
 
     assert _free_units(equipment_type, db_session) == 10
+
+
+def test_a_reservation_waiting_for_the_events_lock_is_refused_once_it_is_cancelled(
+    db_session: Session,
+    saved_users: list[User],
+    equipment_type: EquipmentType,
+    saved_event_request: EventRequest,
+    set_status: SetStatus,
+    on_event_row_lock: OnEventRowLock,
+) -> None:
+    """The cancellation committed first, so the reservation sees it and saves nothing.
+
+    Read without the event's lock, the reservation would still see the event Approved
+    and keep its units after the cancellation's release (AC3, ADR-0122).
+    """
+    set_status(EventRequestStatus.APPROVED)
+    _cancelled_once_locked(saved_event_request, on_event_row_lock)
+
+    with pytest.raises(equipment_services.EquipmentNotReservableError) as exc_info:
+        _reserve_two(equipment_type, db_session)
+
+    assert exc_info.value.message == events_services.RESERVATIONS_CLOSED_MESSAGE
+    assert _free_units(equipment_type, db_session) == 10
+
+
+def test_a_move_waiting_for_the_events_lock_is_refused_once_it_is_cancelled(
+    db_session: Session,
+    equipment_type: EquipmentType,
+    three_projectors: EventEquipmentLine,
+    saved_event_request: EventRequest,
+    edit_event: EditEvent,
+    on_event_row_lock: OnEventRowLock,
+) -> None:
+    """Confirming a reservation's move takes the same turn as reserving (AC3)."""
+    edit_event(COORDINATOR_ID, {"proposed_date": "2026-10-20"})
+    _cancelled_once_locked(saved_event_request, on_event_row_lock)
+
+    with pytest.raises(equipment_services.EquipmentNotReservableError) as exc_info:
+        _confirm_move(equipment_type, db_session)
+
+    assert exc_info.value.message == events_services.RESERVATIONS_CLOSED_MESSAGE
+    # Still marked, at the period it held before the move was asked for.
+    assert _free_units(equipment_type, db_session) == 7
+
+
+def test_a_reservation_takes_the_period_read_under_the_events_lock(
+    db_session: Session,
+    saved_users: list[User],
+    equipment_type: EquipmentType,
+    saved_event_request: EventRequest,
+    set_status: SetStatus,
+    on_event_row_lock: OnEventRowLock,
+) -> None:
+    """The event moved to the 20th while the reservation waited: it holds the 20th."""
+    set_status(EventRequestStatus.APPROVED)
+    moved = (
+        update(EventRequest)
+        .where(EventRequest.id == saved_event_request.id)
+        .values(proposed_date=date(2026, 10, 20), end_date=date(2026, 10, 20))
+    )
+    on_event_row_lock(lambda connection: connection.execute(moved))
+
+    _reserve_two(equipment_type, db_session)
+
+    [reservation] = db_session.scalars(select(EquipmentReservation)).all()
+    assert (reservation.starts_at, reservation.ends_at) == (
+        datetime(2026, 10, 20, 1, 0, tzinfo=timezone.utc),
+        datetime(2026, 10, 20, 9, 0, tzinfo=timezone.utc),
+    )
+
+
+def test_reserving_locks_the_equipment_type_before_the_event(
+    db_session: Session,
+    saved_users: list[User],
+    equipment_type: EquipmentType,
+    set_status: SetStatus,
+    statements_sent: list[str],
+) -> None:
+    """In the order marking units out of service locks them, so the two can't deadlock.
+
+    Marking units out of service locks the type, then writes the event when it
+    withdraws its safety approval (SCRUM-47 AC5). Locking the event first, then the
+    type, deadlocked with it on Postgres (ADR-0122).
+    """
+    set_status(EventRequestStatus.APPROVED)
+
+    _reserve_two(equipment_type, db_session)
+
+    assert _tables_locked(statements_sent) == ["equipment_types", "event_requests"]
+
+
+def test_confirming_a_move_locks_the_equipment_type_before_the_event(
+    db_session: Session,
+    equipment_type: EquipmentType,
+    three_projectors: EventEquipmentLine,
+    edit_event: EditEvent,
+    statements_sent: list[str],
+) -> None:
+    """As reserving does, for the same reason."""
+    edit_event(COORDINATOR_ID, {"proposed_date": "2026-10-20"})
+    statements_sent.clear()
+
+    _confirm_move(equipment_type, db_session)
+
+    assert _tables_locked(statements_sent)[:2] == ["equipment_types", "event_requests"]
 
 
 # --------------------------------------------------------------------------

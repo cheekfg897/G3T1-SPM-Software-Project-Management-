@@ -3426,6 +3426,30 @@ def get_event_equipment_need(
     return _equipment_need_of(event_request)
 
 
+def lock_event_equipment_need(
+    event_id: int, *, session: Session | None = None
+) -> EventEquipmentNeed:
+    """The event's period and equipment read again under its row lock, until the commit.
+
+    For the equipment module to take before it saves a reservation or confirms one's
+    move, once it has locked the equipment type. The organiser's cancellation holds
+    the same lock (:func:`_lock_event_row`), so a reservation either commits first and
+    is returned by the release, or waits and sees the event cancelled; read without it,
+    one saved during the cancellation kept its units (SCRUM-61 AC3, ADR-0122).
+
+    Args:
+        event_id: The event's id, from :func:`get_event_equipment_need`.
+        session: Database session; defaults to ``db.session``.
+
+    Raises:
+        EventPeriodIncompleteError: 409 — the event has no complete date and times.
+    """
+    sess = resolve_session(session)
+    read_before = sess.get(EventRequest, event_id)
+    event_request = _lock_event_row(read_before, sess)
+    return _equipment_need_of(event_request)
+
+
 def get_event_equipment_need_for_viewer(
     viewer_id: int | str, reference: str, *, viewer_role: Role, session: Session | None = None
 ) -> EventEquipmentNeed:

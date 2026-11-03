@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 import pytest
-from sqlalchemy import Connection, update
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.modules.auth.models import User
@@ -35,13 +35,12 @@ from app.modules.events.services import (
     EventCancellationNotAllowedError,
     cancel_event_request,
 )
-from tests.events.cases import LOST_CONNECTION
+from tests.events.cases import LOST_CONNECTION, OnEventRowLock
 
 pytestmark = pytest.mark.scrum_61
 
 SaveChangeRequest = Callable[..., EventChangeRequest]
 ChangeRequestsOf = Callable[[int], list[EventChangeRequest]]
-OnEventRowLock = Callable[[Callable[[Connection], None]], None]
 ReloadEventRequest = Callable[[int], EventRequest]
 
 REFERENCE = "EVR-AAAAAAAA"
