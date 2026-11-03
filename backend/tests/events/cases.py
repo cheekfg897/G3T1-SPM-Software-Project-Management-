@@ -190,7 +190,8 @@ def arrangement_for_record(**overrides: Any) -> ArrangementForRecord:
 
     By default it is the first one the ``arrange`` fixture saves: an approved, unflagged
     arrangement at the default venue (Main Hall in Building A: 100 seats, a projector
-    and wifi, wheelchair access), from 09:00 UTC on 1 November 2026 for half an hour,
+    and wifi, wheelchair access), for half an hour starting an hour into
+    ``saved_event_request``: from 02:00 UTC (10:00 in business time) on 15 October 2026,
     with nothing prepared yet.
     """
     shown: dict[str, Any] = {
@@ -199,8 +200,8 @@ def arrangement_for_record(**overrides: Any) -> ArrangementForRecord:
         "venue_capacity": 100,
         "venue_facilities": ["projector", "wifi"],
         "venue_accessibility_features": ["wheelchair_access"],
-        "starts_at": datetime(2026, 11, 1, 9, 0, tzinfo=UTC),
-        "ends_at": datetime(2026, 11, 1, 9, 30, tzinfo=UTC),
+        "starts_at": datetime(2026, 10, 15, 2, 0, tzinfo=UTC),
+        "ends_at": datetime(2026, 10, 15, 2, 30, tzinfo=UTC),
         "purpose": "Main session",
         "expected_occupancy": 80,
         "required_layout": None,

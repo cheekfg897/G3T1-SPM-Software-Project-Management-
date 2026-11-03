@@ -687,9 +687,12 @@ def test_the_event_cant_go_to_safety_review_while_a_booking_is_marked(
     with pytest.raises(event_services.SafetyReviewNotAllowedError) as refusal:
         event_services.submit_for_safety_review(COORDINATOR_ID, event.reference, session=db_session)
 
+    # It starts before the moved start, so it is outside the event too (SCRUM-109).
     assert refusal.value.details == {
         "venue_arrangements": [
-            f"Venue arrangement {main_id} is flagged (requires reconfirmation): {TIMING_REASON}"
+            f"Venue arrangement {main_id} is flagged (requires reconfirmation): {TIMING_REASON}",
+            f"Venue arrangement {main_id} is for 2026-11-01 09:00 to 2026-11-01 12:00,"
+            " outside the event's 2026-11-01 10:00 to 2026-11-02 17:30.",
         ]
     }
 

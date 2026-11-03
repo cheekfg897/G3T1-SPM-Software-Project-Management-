@@ -1,0 +1,31 @@
+# ADR-0130: The Safety Review and confirmation gates refuse a venue booking outside the event's period
+
+- **Status:** Accepted; the rule is SCRUM-109's ACs and its implementation note, decisions 4-7 are the Product Owner's (2 Nov 2026, decision 4's wording revised 3 Nov) and decisions 8-9 too (3 Nov); decision 3's place in the list is a default to review
+- **Date:** 2026-11-02
+- **Story:** SCRUM-109 Block Safety Review and confirmation when a venue booking falls outside the event's period
+- **Extends:** [ADR-0047](0047-safety-officer-and-safety-review.md) (the Safety Review gate), [ADR-0094](0094-reassess-each-venue-arrangement-after-a-significant-change.md) (what a significant change flags), [ADR-0112](0112-reconfirm-or-reject-a-flagged-booking.md) (a reconfirmed period lies within the event)
+
+## Context
+The Safety Review gate (SCRUM-97) and confirmation (SCRUM-49) checked that each active venue arrangement was Approved, didn't need an alternative venue and wasn't flagged by a change. Nothing compared a booking's period with the event's. On 2 Nov a two-venue event's date moved while one booking was On Hold. A hold isn't flagged by a timing change (ADR-0094 decision 2), so Venue Staff approved it on the old date and the event reached Safety Review with a booking on the wrong date. Week 4's instructions require that reservations reflect the event's date and time.
+
+SCRUM-109 was re-scoped on 2 Nov to the gates only: how holds are reassessed doesn't change.
+
+## Decision
+1. **The rule: each active arrangement's period lies within the event's** (AC1-AC3). It may start no earlier than the event and end no later. Equal is within, so a booking for exactly the event's period passes, and so does a shorter one such as a breakout room. This is the rule reconfirming a booking already applies (`_require_within_event`, ADR-0112). The booking's own `starts_at`/`ends_at` is compared, not the period it holds the venue with setup and turnaround (ADR-0011), which would refuse valid bookings. The event's period runs from its proposed date and start time to its end date and end time, in business time.
+2. **Every active arrangement counts, whatever its status;** a retired one (Withdrawn, Released, Cancelled) is ignored, as the gates already ignore it (ADR-0039). A Pending arrangement outside the event is named twice: once as pending, once as outside.
+3. **One check serves both gates.** `venue.services.list_arrangements_outside_event` lists the arrangements with both periods in business time, and `events.services._venue_gaps` names each one under `details.venue_arrangements`, after the other venue gaps. **Default to review:** that place in the list.
+4. **The reason names the booking and both periods** (Product Owner, 2 Nov): `Venue arrangement 12 is for 2026-11-01 09:00 to 2026-11-01 12:00, outside the event's 2026-10-31 09:00 to 2026-10-31 17:00.` "Is for", not "is booked for" (Product Owner, 3 Nov): a Pending, Rejected, Conflicting or Expired arrangement isn't booked, and its first reason has just said so. The frontend shows the reason as sent and needs no label of its own.
+5. **A booking flagged by a date change and left on the old date is named for both reasons** (Product Owner, 2 Nov). Each is true, and reconfirming the booking for the new period settles both.
+6. **Raising a request outside the event's dates is still accepted** ([ADR-0035](0035-venue-booking-requests.md) decision 15 stands; Product Owner, 2 Nov). The gates now catch such a booking before the event moves on. Refusing it when it is raised is left to a new ticket.
+7. **[ADR-0129](0129-reassess-venue-bookings-after-an-approved-change-request.md) decision 10 still stands** (Product Owner, 2 Nov): a booking On Hold isn't reassessed after a change, and `FLAGGABLE_REQUEST_STATUSES` doesn't change. This decision closes the wrong-date part of that gap at the gates: a hold approved on the old date is now named there instead of passing. A stale hold still blocks its old period until it is approved, rejected or expires, and Venue Staff still get no signal (SCRUM-109's out-of-scope list).
+8. **The refusal's top line and each gate's card state the rule** (Product Owner, 3 Nov). Both messages now read "every venue arrangement is approved and booked within the event's date and time", and so do the "Send to safety review" and "Confirm the event" cards, so the line above a reason about an approved booking no longer reads as though approval were all it lacked.
+9. **Confirmation's refusal is checked against the real backend too** (Product Owner, 3 Nov, replacing the 2 Nov call to leave it to the unit tests, which rested on a wrong claim). An event can reach confirmation with such a booking through the API: an event in Safety Review whose venue is blocked gets a replacement that Venue Staff hold, the original is cancelled, the event's date moves (a hold isn't flagged, so it stays in Safety Review), and Venue Staff approve the hold on the old date. The integration test takes that route.
+
+## Consequences
+- An event can't be sent to Safety Review or confirmed with a booking on the wrong date, however that booking came about, but for one race: `submit_for_safety_review` takes no row lock, so a date change saved between its check and its save can still leave the event in Safety Review with a booking outside it. That is so on `main` too, and confirmation, which locks the row first, then refuses the event. Locking the row is left to a new ticket.
+- The way out for a booking left outside depends on how it got there. One flagged by the change is reconfirmed for the new period (ADR-0112). An approved hold that was never flagged can't be reconfirmed, replaced or withdrawn; the coordinator cancels it (SCRUM-111) and raises a new request. The refusal names the booking but doesn't say which way out it has.
+- The frontend's mock doesn't work out the reason after a date change, since it keeps no periods: a fixture sets it. The real backend's answer to a change is checked by the integration tests.
+- Test fixtures must book within their event. Two that didn't were fixed with SCRUM-109.
+
+## Revisit when
+On Hold bookings are flagged for Venue Staff after a date or time change, or raising a request starts refusing a period outside the event: the gates would then rarely see such a booking, but should keep the check.

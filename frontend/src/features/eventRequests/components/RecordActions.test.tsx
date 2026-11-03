@@ -733,3 +733,14 @@ describe('SCRUM-49 rejecting an event during planning (AC9, AC10)', () => {
     expect(reject).toHaveAttribute('aria-busy', 'true')
   })
 })
+
+describe('SCRUM-109 each gate says its venue bookings must be within the event', () => {
+  it.each([
+    [APPROVED_AND_SETTLED, 'Send to safety review'],
+    [READY_TO_CONFIRM, 'Confirm the event'],
+  ])("%s: the '%s' card names the event's date and time", async (reference, card) => {
+    openAsHana(reference)
+
+    expect(await findRegion(card)).toHaveTextContent("booked within the event's date and time")
+  })
+})

@@ -14,6 +14,7 @@ import { refusal, signInAs, staffAccount } from './backend'
 import {
   approvedEvent,
   coordinatorPosts,
+  EVENT_DATE,
   eventReadyForSafetyReview,
   LEAD,
   SAFETY_OFFICER,
@@ -115,7 +116,12 @@ describe('SCRUM-57 deciding a change request against the backend', () => {
       })
       const held = await refusal(sendToSafetyReview(event.reference))
       expect(held).toMatchObject({ status: 409, code: 'safety_review_not_allowed' })
-      expect(held.fieldErrors.venue_arrangements).toHaveLength(2)
+      // Booked from 09:00, it now starts before the event's new 10:00 start too (SCRUM-109).
+      expect(held.fieldErrors.venue_arrangements).toHaveLength(3)
+      expect(held.fieldErrors.venue_arrangements?.[2]).toBe(
+        `Venue arrangement ${event.bookingId} is for ${EVENT_DATE} 09:00 to ` +
+          `${EVENT_DATE} 12:00, outside the event's ${EVENT_DATE} 10:00 to ${EVENT_DATE} 17:00.`,
+      )
     },
   )
 

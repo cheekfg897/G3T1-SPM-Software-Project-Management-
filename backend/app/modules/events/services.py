@@ -5032,8 +5032,9 @@ def find_public_event(reference: str, *, session: Session | None = None) -> Publ
 
 NOT_APPROVED_FOR_SAFETY_REVIEW_MESSAGE = "Only an approved event can go to Safety Review."
 SAFETY_REVIEW_NOT_READY_MESSAGE = (
-    "The event can go to Safety Review once every venue arrangement is approved and every "
-    "equipment request has an outcome from Technical Support."
+    "The event can go to Safety Review once every venue arrangement is approved and booked "
+    "within the event's date and time, and every equipment request has an outcome from "
+    "Technical Support."
 )
 
 
@@ -5048,8 +5049,9 @@ def _venue_gaps(event_id: int, session: Session) -> list[str]:
     """Why the event's venues keep it out of Safety Review; empty when they don't.
 
     It needs at least one venue arranged, and every active arrangement approved
-    (SCRUM-97 AC1, ADR-0047), not needing an alternative venue (SCRUM-92) and not
-    flagged by a significant change (SCRUM-33 AC6, SCRUM-58 AC3, ADR-0094).
+    (SCRUM-97 AC1, ADR-0047), not needing an alternative venue (SCRUM-92), not
+    flagged by a significant change (SCRUM-33 AC6, SCRUM-58 AC3, ADR-0094) and booked
+    within the event's date and time (SCRUM-109, ADR-0130).
     """
     from app.modules.venue import services as venue_services  # circular at import time
 
@@ -5071,6 +5073,12 @@ def _venue_gaps(event_id: int, session: Session) -> list[str]:
             gaps.append(
                 f"Venue arrangement {arrangement.id} is flagged ({flag.kind.label}): {flag.reason}"
             )
+    # SCRUM-109 AC1, AC2: nor does one booked outside the event's date and time.
+    for outside in venue_services.list_arrangements_outside_event(event_id, session=session):
+        gaps.append(
+            f"Venue arrangement {outside.id} is for {outside.booked_for}, outside the"
+            f" event's {outside.event_period}."
+        )
     return gaps
 
 
@@ -5114,11 +5122,11 @@ def submit_for_safety_review(
     """Send an approved event to the Safety Officer (SCRUM-97 AC1, AC2, ADR-0047).
 
     Only the event's assigned coordinator may. The event must be approved, have at
-    least one venue arranged, every active arrangement approved (a retired one is
-    ignored) and every equipment request an outcome from Technical Support; an event
-    with no equipment requests passes that check. The ``safety_review`` status and a
-    ``safety_review_requested`` history entry naming the coordinator are saved in one
-    commit.
+    least one venue arranged, every active arrangement approved and booked within its
+    date and time (a retired one is ignored, SCRUM-109) and every equipment request an
+    outcome from Technical Support; an event with no equipment requests passes that
+    check. The ``safety_review`` status and a ``safety_review_requested`` history entry
+    naming the coordinator are saved in one commit.
 
     Args:
         coordinator_id: The caller's user id, taken from their token.
@@ -5766,8 +5774,8 @@ def get_event_capacity_for_viewer(
 NOT_IN_SAFETY_REVIEW_FOR_CONFIRMATION_MESSAGE = "Only an event in Safety Review can be confirmed."
 CONFIRMATION_NOT_READY_MESSAGE = (
     "The event can be confirmed once the Safety Officer has approved it, every venue "
-    "arrangement is approved and every equipment request has an outcome from Technical "
-    "Support."
+    "arrangement is approved and booked within the event's date and time, and every "
+    "equipment request has an outcome from Technical Support."
 )
 SAFETY_NOT_APPROVED_GAP = "The Safety Officer has not approved the event."
 
@@ -5787,8 +5795,9 @@ def confirm_event_request(
     Only the event's assigned coordinator may, and only by asking: nothing confirms an
     event on its own (AC3). The event must be in Safety Review with the Safety
     Officer's approval (``has_safety_approval``), have at least one venue arranged,
-    every active arrangement Approved (a retired one is ignored) and every equipment
-    request an outcome; an event with no equipment requests passes that check (AC2).
+    every active arrangement Approved and booked within its date and time (a retired
+    one is ignored, SCRUM-109) and every equipment request an outcome; an event with
+    no equipment requests passes that check (AC2).
     The ``confirmed`` status and an ``event_confirmed`` history entry naming the
     coordinator are saved in one commit. The organiser who submitted the request is
     told afterwards (AC12, ADR-0015). The event's row is locked first, and it isn't
