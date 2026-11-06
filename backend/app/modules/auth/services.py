@@ -106,6 +106,16 @@ def list_user_ids_with_role(role: Role, *, session: Session | None = None) -> li
     return list(resolve_session(session).scalars(stmt))
 
 
+def has_any_users(*, session: Session | None = None) -> bool:
+    """Whether any account exists yet.
+
+    The demo seed runs only on a database with no accounts, so it never mixes demo
+    data into real data.
+    """
+    first_user_id = resolve_session(session).scalar(select(User.id).limit(1))
+    return first_user_id is not None
+
+
 def _save_new_user(data: Mapping[str, Any], session: Session) -> User:
     """Hash the password and persist a new account from already-validated ``data``.
 
