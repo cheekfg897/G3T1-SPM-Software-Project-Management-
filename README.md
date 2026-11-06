@@ -20,6 +20,7 @@ backend/            Flask application (see below)
     modules/venue/  venue catalogue (SCRUM-25), availability calendar (SCRUM-26), search (SCRUM-35), suitability check (SCRUM-36), setup/turnaround (SCRUM-67), blocks (SCRUM-34)
     modules/equipment/ equipment catalogue (SCRUM-27), availability and reservations (SCRUM-45, SCRUM-46), taking damaged equipment out of circulation (SCRUM-47)
     modules/registration/ the event catalogue, registering for a confirmed event, an attendee's own registrations (SCRUM-52), withdrawing (SCRUM-53) and who has registered for an event (SCRUM-55)
+    modules/demo/   `flask seed-demo`: demo accounts and events for a walkthrough
   tests/            unit tests (pytest), one marker per story
   migrations/       Alembic migrations (Flask-Migrate)
 docs/adr/           Architecture Decision Records: choices made where requirements were silent
@@ -110,6 +111,36 @@ nothing. The scheduled *Expire Tentative Holds* workflow runs it every hour once
 flask expire-holds
 # Expired 1 hold(s); warned about 0 hold(s).
 ```
+
+### Demo data
+
+`flask seed-demo` fills an **empty** database with everything a walkthrough needs, so
+nothing has to be set up by hand. It asks for one password, hidden and twice, which
+every demo account then signs in with. A database that already has an account is
+refused, so demo data never mixes with real data; to seed again, reset it first with
+`flask db downgrade base && flask db upgrade`.
+
+```bash
+flask seed-demo
+# Or, running in Docker:
+docker compose exec backend flask seed-demo
+```
+
+| Account | Role | What it has to show |
+|---|---|---|
+| `olivia@acme.example` | Event Organiser, Acme Events | A draft, a request under review, the gala being planned, the confirmed conference |
+| `nadia@northwind.example` | Event Organiser, Northwind Conferences | A request waiting for the Lead, a question to answer, the breakfast, a rejection |
+| `leah@connectsphere.example` | Event Coordinator Lead | The product launch in the unassigned queue |
+| `carl@connectsphere.example` | Event Coordinator | A review in progress, a question asked, the breakfast to mark completed |
+| `cara@connectsphere.example` | Event Coordinator | The gala being planned and the conference, confirmed with registration open |
+| `vera@connectsphere.example` | Venue Staff | The gala's booking to decide |
+| `tina@connectsphere.example` | Technical Support Staff | The gala's microphones to review, the conference's reserved projectors |
+| `sam@connectsphere.example` | Safety Officer | The two events they approved |
+| `alex@example.com` | Attendee | Registered for the conference |
+| `bella@example.com` | Attendee | Nothing yet: register for the conference from the catalogue |
+
+The events are dated around the day you seed, so the data is current whenever you run
+it. The breakfast is dated yesterday, so it can be marked completed straight away.
 
 ```bash
 # Register (public; only event_organiser or attendee — staff comes from the command above)
