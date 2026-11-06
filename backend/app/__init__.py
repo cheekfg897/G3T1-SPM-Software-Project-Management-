@@ -56,6 +56,7 @@ def _register_modules(app: Flask) -> None:
     """
     from app.modules import (
         auth,
+        demo,
         equipment,
         events,
         notifications,
@@ -71,6 +72,7 @@ def _register_modules(app: Flask) -> None:
     venue.register(app)
     equipment.register(app)
     registration.register(app)
+    demo.register(app)
 
 
 def create_app(config_name: str | None = None) -> Flask:
