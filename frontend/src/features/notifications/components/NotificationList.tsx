@@ -6,6 +6,21 @@ import { formatDateTime } from '@/lib/formatDate'
 import type { Notification } from '../api'
 import { useMarkRead } from '../hooks'
 
+/**
+ * The event's name: a link to the event, or plain text when the backend sends no link because
+ * the recipient can no longer open it (SCRUM-28 AC1, ADR-0130).
+ */
+function EventName({ notification }: { notification: Notification }) {
+  if (notification.link === null) {
+    return <span className="text-ink">{notification.event_name}</span>
+  }
+  return (
+    <Link to={notification.link} className="text-flare hover:underline">
+      {notification.event_name}
+    </Link>
+  )
+}
+
 function NotificationRow({ notification }: { notification: Notification }) {
   const markRead = useMarkRead()
   const isUnread = notification.read_at === null
@@ -23,9 +38,7 @@ function NotificationRow({ notification }: { notification: Notification }) {
         {isUnread && <Badge>Unread</Badge>}
       </div>
       <p className="text-ink-muted mt-2 text-sm">
-        <Link to={notification.link} className="text-flare hover:underline">
-          {notification.event_name}
-        </Link>
+        <EventName notification={notification} />
       </p>
       <p className="text-ink-faint mt-1 text-sm">
         <time dateTime={notification.created_at}>{formatDateTime(notification.created_at)}</time>

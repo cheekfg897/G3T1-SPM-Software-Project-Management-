@@ -46,6 +46,9 @@ The safety checks (SCRUM-97, SCRUM-98) also need a Lead, Venue Staff and a Safet
 the same way with `--role event_coordinator_lead`, `venue_staff` and `safety_officer`. Pass them as
 `INTEGRATION_LEAD_EMAIL` / `_PASSWORD`, `INTEGRATION_VENUE_STAFF_EMAIL` / `_PASSWORD` and
 `INTEGRATION_SAFETY_OFFICER_EMAIL` / `_PASSWORD`; the checks that need them skip without them.
+The reassignment checks (SCRUM-96, SCRUM-28) also need a second Event Coordinator to hand an
+event to, made with `--role event_coordinator` and passed as
+`INTEGRATION_SECOND_COORDINATOR_EMAIL` / `_PASSWORD`.
 
 ## Accounts
 

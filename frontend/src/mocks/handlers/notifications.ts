@@ -28,7 +28,14 @@ const KINDS = {
     kind: 'event_request_submitted',
     message: 'A new event request was submitted.',
   },
+  reassignedAway: {
+    kind: 'event_reassigned_away',
+    message: 'This event has been reassigned to another Event Coordinator and is no longer yours.',
+  },
 } as const
+
+/** Kinds the backend sends with a null link: the recipient has lost access to the event (ADR-0130). */
+const NO_LINK_KINDS: ReadonlySet<string> = new Set([KINDS.reassignedAway.kind])
 
 /** A notification and whose it is. The recipient is not part of what the backend sends. */
 interface StoredNotification {
@@ -49,13 +56,14 @@ interface SeedOptions {
 /** A notification as the backend would send it; the event reference follows from the id. */
 function seed(options: SeedOptions): StoredNotification {
   const reference = `EVR-MOCK${String(options.id).padStart(4, '0')}`
+  const { kind, message } = KINDS[options.kind]
   const notification: Notification = {
     id: options.id,
-    kind: KINDS[options.kind].kind,
-    message: KINDS[options.kind].message,
+    kind,
+    message,
     event_reference: reference,
     event_name: options.eventName,
-    link: `/events/${reference}`,
+    link: NO_LINK_KINDS.has(kind) ? null : `/events/${reference}`,
     created_at: options.createdAt,
     read_at: options.readAt ?? null,
     detail: options.detail ?? null,
@@ -64,8 +72,9 @@ function seed(options: SeedOptions): StoredNotification {
 }
 
 /**
- * Three each: two unread and one read, the read one without a detail. They are stored
- * oldest first, as a table fills, so the list handler has to sort to put the newest first.
+ * Three each: two unread and one read, the read one without a detail. The coordinator also has
+ * a read notice about an event the Lead reassigned away from them, which has no link. They are
+ * stored oldest first, as a table fills, so the list handler has to sort to put the newest first.
  */
 function seedNotifications(): StoredNotification[] {
   const attendee = MOCK_ACCOUNTS.attendee.id
@@ -135,6 +144,14 @@ function seedNotifications(): StoredNotification[] {
       eventName: 'Hack Night',
       createdAt: '2026-10-04T13:20:00+08:00',
       detail: 'Projector and 4 extension leads.',
+    }),
+    seed({
+      id: 10,
+      recipientId: coordinator,
+      kind: 'reassignedAway',
+      eventName: 'Open Day Tour',
+      createdAt: '2026-10-02T16:00:00+08:00',
+      readAt: '2026-10-02T17:00:00+08:00',
     }),
     seed({
       id: 9,

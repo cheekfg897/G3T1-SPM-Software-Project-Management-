@@ -17,6 +17,9 @@ const session = mockSessionFor(MOCK_ACCOUNTS.attendee)
 // The attendee's seeded notifications, newest first (mocks/handlers/notifications.ts).
 const UNREAD_MESSAGE = 'A new event request was submitted.'
 const READ_MESSAGE = 'You have been assigned to coordinate this event.'
+// The coordinator's notice about an event the Lead reassigned away from them (ADR-0130).
+const REASSIGNED_AWAY_MESSAGE =
+  'This event has been reassigned to another Event Coordinator and is no longer yours.'
 
 describe('SCRUM-28 notifications page', () => {
   it('sends a visitor to log in, and asks for nothing', async () => {
@@ -45,6 +48,15 @@ describe('SCRUM-28 notifications page', () => {
 
     const row = await findRow(READ_MESSAGE)
     expect(row.textContent).toBe(`${READ_MESSAGE}Board Game Social3 Oct, 11:00 am`)
+  })
+
+  it('names the event without a link when the notice is to someone who lost it', async () => {
+    renderApp(ROUTES.NOTIFICATIONS, { session: mockSessionFor(MOCK_ACCOUNTS.coordinator) })
+
+    const row = await findRow(REASSIGNED_AWAY_MESSAGE)
+    expect(within(row).getByText('Open Day Tour')).toBeInTheDocument()
+    expect(within(row).getByText('2 Oct, 4:00 pm')).toBeInTheDocument()
+    expect(within(row).queryByRole('link')).not.toBeInTheDocument()
   })
 
   it('tells unread from read, and only offers to mark an unread one', async () => {

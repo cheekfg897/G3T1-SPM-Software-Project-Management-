@@ -13,8 +13,11 @@ export interface Notification {
   message: string
   event_reference: string
   event_name: string
-  /** Where to open the event. Used as sent. */
-  link: string
+  /**
+   * Where to open the event. Used as sent. Null when the recipient has lost access to the
+   * event, such as a coordinator it was reassigned away from (SCRUM-28 AC1, ADR-0130).
+   */
+  link: string | null
   /** ISO date-time with an offset, in business time. */
   created_at: string
   /** When it was read; null while unread. */

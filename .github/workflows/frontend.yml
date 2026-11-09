@@ -107,6 +107,7 @@ jobs:
       INTEGRATION_VENUE_STAFF_EMAIL: integration-venue-staff@connectsphere.test
       INTEGRATION_SAFETY_OFFICER_EMAIL: integration-safety-officer@connectsphere.test
       INTEGRATION_TECH_SUPPORT_EMAIL: integration-tech-support@connectsphere.test
+      INTEGRATION_SECOND_COORDINATOR_EMAIL: integration-second-coordinator@connectsphere.test
 
     steps:
       - name: Check out
@@ -150,7 +151,8 @@ jobs:
       # to assign it and Venue Staff to approve its venue, and a Safety Officer to answer. They
       # are made the same way, each with its own password for this run. The Venue Staff account
       # also runs the SCRUM-43 decision checks that skip without one, and the Technical Support
-      # account the SCRUM-48 equipment outcome checks that skip without one.
+      # account the SCRUM-48 equipment outcome checks that skip without one. A second Event
+      # Coordinator gives the Lead someone to reassign an event to (SCRUM-96, SCRUM-28).
       - name: Create the Lead, Venue Staff and Safety Officer accounts for the tests
         working-directory: backend
         run: |
@@ -171,6 +173,8 @@ jobs:
             "Integration Safety Officer" INTEGRATION_SAFETY_OFFICER_PASSWORD
           create_account technical_support_staff "$INTEGRATION_TECH_SUPPORT_EMAIL" \
             "Integration Technical Support" INTEGRATION_TECH_SUPPORT_PASSWORD
+          create_account event_coordinator "$INTEGRATION_SECOND_COORDINATOR_EMAIL" \
+            "Integration Second Coordinator" INTEGRATION_SECOND_COORDINATOR_PASSWORD
 
       # Left running in the background for the next step; the runner stops it at the end.
       - name: Start the backend
