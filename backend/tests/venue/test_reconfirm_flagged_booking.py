@@ -412,9 +412,13 @@ def test_a_booking_that_is_still_flagged_holds_the_event_back(
     with pytest.raises(SafetyReviewNotAllowedError) as excinfo:
         submit_for_safety_review(COORDINATOR_ID, event.reference, session=db_session)
 
+    # Still on the old date, so it is outside the moved event too (SCRUM-109, ADR-0130).
     assert excinfo.value.details == {
         "venue_arrangements": [
-            f"Venue arrangement {breakout_id} is flagged (requires reconfirmation): {TIMING_REASON}"
+            f"Venue arrangement {breakout_id} is flagged (requires reconfirmation):"
+            f" {TIMING_REASON}",
+            f"Venue arrangement {breakout_id} is for 2026-11-01 13:00 to 2026-11-01 16:00,"
+            " outside the event's 2026-11-02 09:00 to 2026-11-03 17:30.",
         ]
     }
 

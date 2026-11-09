@@ -15,7 +15,7 @@ function SendToSafetyReview({ record }: { record: EventRecord }) {
   return (
     <ActionCard
       title="Send to safety review"
-      description="The Safety Officer is asked to check the event. Every venue arrangement must be approved and every equipment request answered first."
+      description="The Safety Officer is asked to check the event. Every venue arrangement must be approved and booked within the event's date and time, and every equipment request answered first."
     >
       <RefusalAlert error={send.error} />
       <Button isPending={send.isPending} onClick={() => send.mutate()}>
@@ -34,7 +34,7 @@ function ConfirmEvent({ record }: { record: EventRecord }) {
   return (
     <ActionCard
       title="Confirm the event"
-      description="Once the Safety Officer has approved it and every venue and equipment request is settled. The organiser is told."
+      description="Once the Safety Officer has approved it, every venue and equipment request is settled, and every venue is booked within the event's date and time. The organiser is told."
     >
       <RefusalAlert error={confirm.error} />
       <Button isPending={confirm.isPending} onClick={() => confirm.mutate()}>

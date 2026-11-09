@@ -1,6 +1,7 @@
 import { ROLE } from '@/config/roles'
 import { fetchCurrentUser, register } from '@/features/auth/api'
 import {
+  cancelBooking,
   decideBookingRequest,
   fetchBookingRequests,
   placeBookingHold,
@@ -52,7 +53,8 @@ import type { Credentials } from './backend'
  * significant change in Safety Review tells the Safety Officer and, when it unsettles an
  * arrangement, sends the event back to Approved (SCRUM-33 AC9, ADR-0107). Also the decision a venue booking request locks (SCRUM-31 AC7,
  * ADR-0084), and the statuses the coordinator's edit is allowed in (SCRUM-33 AC8, ADR-0101;
- * SCRUM-110, ADR-0116).
+ * SCRUM-110, ADR-0116). Both gates refuse a booking outside the event's date and time
+ * (SCRUM-109, ADR-0130).
  *
  * The refusals that need no event of the coordinator's run with the staff account every run has
  * (an Event Coordinator) and new organisers. An event of the coordinator's needs a Lead to assign
@@ -94,7 +96,16 @@ const SAFETY_REVIEW_NOT_READY = {
   status: 409,
   code: 'safety_review_not_allowed',
   message:
-    'The event can go to Safety Review once every venue arrangement is approved and every ' +
+    'The event can go to Safety Review once every venue arrangement is approved and booked ' +
+    "within the event's date and time, and every equipment request has an outcome from " +
+    'Technical Support.',
+}
+const CONFIRMATION_NOT_READY = {
+  status: 409,
+  code: 'confirmation_not_allowed',
+  message:
+    'The event can be confirmed once the Safety Officer has approved it, every venue ' +
+    "arrangement is approved and booked within the event's date and time, and every " +
     'equipment request has an outcome from Technical Support.',
 }
 
@@ -141,6 +152,8 @@ function daysFromNow(days: number): string {
 }
 
 const EVENT_DATE = daysFromNow(30)
+/** The day after the event: a booking then is outside the event's period (SCRUM-109). */
+const DAY_AFTER_EVENT = daysFromNow(31)
 
 /** As the staff account: record a client organisation and sign its organiser up. */
 async function newOrganiser(): Promise<Credentials> {
@@ -218,14 +231,17 @@ async function newVenue(): Promise<number> {
   return venue.id
 }
 
-/** As the staff account: ask for a new venue for the morning of the event. Returns its id. */
-async function raiseVenueRequest(reference: string): Promise<number> {
+/**
+ * As the staff account: ask for a new venue from 09:00 to 12:00 on `day`, the event's own
+ * unless told otherwise, so within its 09:00 to 17:00. Returns its id.
+ */
+async function raiseVenueRequest(reference: string, day = EVENT_DATE): Promise<number> {
   const venueId = await newVenue()
   await signInAs(staffAccount())
   const booking = await raiseBookingRequest(reference, {
     venue_id: venueId,
-    starts_at: `${EVENT_DATE}T09:00:00+08:00`,
-    ends_at: `${EVENT_DATE}T12:00:00+08:00`,
+    starts_at: `${day}T09:00:00+08:00`,
+    ends_at: `${day}T12:00:00+08:00`,
     purpose: 'Integration planning',
   })
   return booking.id
@@ -236,10 +252,13 @@ interface SettledEvent extends PlannedEvent {
   bookingId: number
 }
 
-/** An approved event whose one venue Venue Staff approved: ready for safety review. */
-async function settledEvent(): Promise<SettledEvent> {
+/**
+ * An approved event whose one venue Venue Staff approved for the morning of `day`: ready for
+ * safety review when that is the event's own day, as it is unless told otherwise.
+ */
+async function settledEvent(day = EVENT_DATE): Promise<SettledEvent> {
   const event = await approvedEvent()
-  const bookingId = await raiseVenueRequest(event.reference)
+  const bookingId = await raiseVenueRequest(event.reference, day)
   await signInAs(required(VENUE_STAFF))
   await decideBookingRequest(bookingId, { outcome: 'approved' })
   await signInAs(staffAccount())
@@ -289,16 +308,46 @@ async function eventInSafetyReview(): Promise<PlannedEvent> {
   return event
 }
 
-/** An event in safety review the Safety Officer approved: ready to confirm, signed in as staff. */
-async function safetyApprovedEvent(): Promise<PlannedEvent> {
-  const event = await eventInSafetyReview()
+/** As the Safety Officer: approve the event in safety review, then sign the staff account in. */
+async function approveSafety(reference: string): Promise<void> {
   await signInAs(required(SAFETY_OFFICER))
-  await apiRequest(`/api/events/requests/${event.reference}/safety-outcome`, {
+  await apiRequest(`/api/events/requests/${reference}/safety-outcome`, {
     method: 'POST',
     body: { outcome: 'approved', checklist: SAFETY_CHECKLIST },
   })
   await signInAs(staffAccount())
+}
+
+/** An event in safety review the Safety Officer approved: ready to confirm, signed in as staff. */
+async function safetyApprovedEvent(): Promise<PlannedEvent> {
+  const event = await eventInSafetyReview()
+  await approveSafety(event.reference)
   return event
+}
+
+/** The settled event's one arrangement, as the coordinator's list shows it. */
+async function onlyArrangement(reference: string): Promise<BookingRequest> {
+  const [arrangement] = await fetchBookingRequests(reference)
+  if (arrangement === undefined) {
+    throw new Error('The settled event should have its approved venue arrangement.')
+  }
+  return arrangement
+}
+
+/**
+ * As Venue Staff: block the arrangement's venue for the whole event day, then sign back in.
+ * Returns the block.
+ */
+async function blockVenueOf(arrangement: BookingRequest): Promise<CreatedBlock> {
+  await signInAs(required(VENUE_STAFF))
+  const block = await blockVenue(arrangement.venue_id, {
+    start_time: `${EVENT_DATE}T08:00`,
+    end_time: `${EVENT_DATE}T18:00`,
+    category: 'equipment_failure',
+    reason: 'Lift broken',
+  })
+  await signInAs(staffAccount())
+  return block
 }
 
 afterEach(() => sendRequestsAs(null))
@@ -367,6 +416,77 @@ describe('SCRUM-97 sending an event to safety review against the backend', () =>
       expect(sent).toMatchObject({ reference, status: 'safety_review' })
       expect((await fetchEventRequest(reference)).status).toBe('safety_review')
     },
+  )
+})
+
+describe('SCRUM-109 a booking outside the event’s period against the backend', () => {
+  it.skipIf(!canApproveVenue)(
+    'keeps the event out of safety review, naming the approved booking and both periods',
+    async () => {
+      // One more venue than bookings, so a reason naming the venue's id instead fails.
+      await newVenue()
+      const { reference, bookingId } = await settledEvent(DAY_AFTER_EVENT)
+
+      const error = await refusal(sendToSafetyReview(reference))
+
+      expect(error).toMatchObject(SAFETY_REVIEW_NOT_READY)
+      expect(error.fieldErrors).toEqual({
+        venue_arrangements: [
+          `Venue arrangement ${bookingId} is for ${DAY_AFTER_EVENT} 09:00 to ` +
+            `${DAY_AFTER_EVENT} 12:00, outside the event's ${EVENT_DATE} 09:00 to ` +
+            `${EVENT_DATE} 17:00.`,
+        ],
+      })
+      expect((await fetchEventRequest(reference)).status).toBe('approved')
+    },
+  )
+
+  it.skipIf(!canApproveSafety)(
+    'refuses confirmation for a hold approved on the old date after the event moved in safety review',
+    async () => {
+      // The event goes to safety review on its one booking; Venue Staff block that venue, and
+      // the coordinator replaces it with another, which Venue Staff hold, then cancels it.
+      const { reference, bookingId } = await settledEvent()
+      await sendToSafetyReview(reference)
+      const original = await onlyArrangement(reference)
+      await blockVenueOf(original)
+      const otherVenue = await newVenue()
+      await signInAs(staffAccount())
+      const replacement = await raiseBookingRequest(reference, {
+        venue_id: otherVenue,
+        starts_at: original.starts_at,
+        ends_at: original.ends_at,
+        purpose: 'Integration replacement',
+        replaces_request_id: bookingId,
+      })
+      await signInAs(required(VENUE_STAFF))
+      await placeBookingHold(replacement.id, { expires_at: `${EVENT_DATE}T08:00:00+08:00` })
+      await signInAs(staffAccount())
+      await cancelBooking(reference, bookingId, { reason: 'The venue is blocked.' })
+      // A hold isn't flagged by a date change (ADR-0129 decision 10), so the event stays in
+      // safety review, and Venue Staff approve the hold on the old date.
+      await editEventRequest(reference, {
+        proposed_date: DAY_AFTER_EVENT,
+        end_date: DAY_AFTER_EVENT,
+      })
+      await signInAs(required(VENUE_STAFF))
+      await decideBookingRequest(replacement.id, { outcome: 'approved' })
+      await approveSafety(reference)
+
+      const error = await refusal(confirmEvent(reference))
+
+      expect(error).toMatchObject(CONFIRMATION_NOT_READY)
+      expect(error.fieldErrors).toEqual({
+        venue_arrangements: [
+          `Venue arrangement ${replacement.id} is for ${EVENT_DATE} 09:00 to ` +
+            `${EVENT_DATE} 12:00, outside the event's ${DAY_AFTER_EVENT} 09:00 to ` +
+            `${DAY_AFTER_EVENT} 17:00.`,
+        ],
+      })
+      expect((await fetchEventRequest(reference)).status).toBe('safety_review')
+    },
+    // It signs in a dozen times, each a password hash on the backend.
+    20_000,
   )
 })
 
@@ -542,15 +662,6 @@ describe('SCRUM-69 registration settings against the backend', () => {
 })
 
 describe('SCRUM-49 confirming an event against the backend', () => {
-  const CONFIRMATION_NOT_READY = {
-    status: 409,
-    code: 'confirmation_not_allowed',
-    message:
-      'The event can be confirmed once the Safety Officer has approved it, every venue ' +
-      'arrangement is approved and every equipment request has an outcome from Technical ' +
-      'Support.',
-  }
-
   it('refuses an organiser by role, and a visitor without a token', async () => {
     const { reference } = await submittedEvent()
 
@@ -1107,15 +1218,6 @@ describe('SCRUM-33 reassessing the venue arrangement after a significant edit, a
 })
 
 describe('SCRUM-92 replacing a venue that became unavailable', () => {
-  /** The settled event's one arrangement, as the coordinator's list shows it. */
-  async function onlyArrangement(reference: string): Promise<BookingRequest> {
-    const [arrangement] = await fetchBookingRequests(reference)
-    if (arrangement === undefined) {
-      throw new Error('The settled event should have its approved venue arrangement.')
-    }
-    return arrangement
-  }
-
   /** One of the event's arrangements, as the coordinator's list shows it. */
   async function arrangementOf(reference: string, id: number): Promise<BookingRequest> {
     const listed = await fetchBookingRequests(reference)
@@ -1167,22 +1269,6 @@ describe('SCRUM-92 replacing a venue that became unavailable', () => {
       link: `/events/${reference}`,
     })
     expect(notice?.detail).toMatch(detail)
-  }
-
-  /**
-   * As Venue Staff: block the arrangement's venue for the whole event day, then sign back in.
-   * Returns the block.
-   */
-  async function blockVenueOf(arrangement: BookingRequest): Promise<CreatedBlock> {
-    await signInAs(required(VENUE_STAFF))
-    const block = await blockVenue(arrangement.venue_id, {
-      start_time: `${EVENT_DATE}T08:00`,
-      end_time: `${EVENT_DATE}T18:00`,
-      category: 'equipment_failure',
-      reason: 'Lift broken',
-    })
-    await signInAs(staffAccount())
-    return block
   }
 
   it.skipIf(!canApproveVenue)(

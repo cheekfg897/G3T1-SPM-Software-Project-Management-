@@ -241,12 +241,12 @@ def test_a_lost_notification_does_not_lose_the_rejection(
 def _released_detail(arrangement: VenueBookingRequest) -> str:
     """What Venue Staff are told about the first arrangement ``arrange`` saves.
 
-    It is at ``venue``'s Main Hall, from 17:00 to 17:30 on 1 November 2026 in business
+    It is at ``venue``'s Main Hall, from 10:00 to 10:30 on 15 October 2026 in business
     time; each later one starts an hour after the last.
     """
     return (
-        f"Venue arrangement {arrangement.id} at Main Hall, 2026-11-01 17:00 to"
-        " 2026-11-01 17:30, was released."
+        f"Venue arrangement {arrangement.id} at Main Hall, 2026-10-15 10:00 to"
+        " 2026-10-15 10:30, was released."
     )
 
 
@@ -302,8 +302,8 @@ def test_each_released_arrangement_is_its_own_notice(
 
     # Newest first: the second arrangement's notice was sent last.
     assert [detail for _, detail in _released_notices(VENUE_STAFF_ID)] == [
-        f"Venue arrangement {second.id} at Main Hall, 2026-11-01 18:00 to"
-        " 2026-11-01 18:30, was released.",
+        f"Venue arrangement {second.id} at Main Hall, 2026-10-15 11:00 to"
+        " 2026-10-15 11:30, was released.",
         _released_detail(first),
     ]
 

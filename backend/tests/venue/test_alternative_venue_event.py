@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
+from datetime import date
 from typing import Any
 
 import pytest
@@ -459,6 +460,12 @@ def test_the_safety_review_gate_names_a_flagged_hold_as_needing_an_alternative_v
     assert held_venue is not None
     block(held_venue, at(10), at(11), db_session)
     [_, breakout] = services.list_active_arrangements(multi_venue_event.id, session=db_session)
+    # A hold needs the event ahead of now, but the requests are on 1 November 2026:
+    # with the hold placed, the event moves onto their dates, so each lies within it
+    # (SCRUM-109).
+    multi_venue_event.proposed_date = date(2026, 11, 1)
+    multi_venue_event.end_date = date(2026, 11, 2)
+    db_session.commit()
 
     with pytest.raises(event_services.SafetyReviewNotAllowedError) as refusal:
         event_services.submit_for_safety_review(

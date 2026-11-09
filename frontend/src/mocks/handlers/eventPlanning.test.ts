@@ -75,7 +75,17 @@ const SAFETY_REVIEW_NOT_READY = {
   status: 409,
   code: 'safety_review_not_allowed',
   message:
-    'The event can go to Safety Review once every venue arrangement is approved and every ' +
+    'The event can go to Safety Review once every venue arrangement is approved and booked ' +
+    "within the event's date and time, and every equipment request has an outcome from " +
+    'Technical Support.',
+}
+
+const CONFIRMATION_NOT_READY = {
+  status: 409,
+  code: 'confirmation_not_allowed',
+  message:
+    'The event can be confirmed once the Safety Officer has approved it, every venue ' +
+    "arrangement is approved and booked within the event's date and time, and every " +
     'equipment request has an outcome from Technical Support.',
 }
 
@@ -491,15 +501,6 @@ describe('SCRUM-69 mock: the optional withdrawal cut-off (AC6, ADR-0086)', () =>
 describe('SCRUM-49 mock: confirming an event', () => {
   const READY_TO_CONFIRM = 'EVR-PLAN0003'
   const HELD_BACK_EVERYWHERE = 'EVR-PLAN0004'
-  const CONFIRMATION_NOT_READY = {
-    status: 409,
-    code: 'confirmation_not_allowed',
-    message:
-      'The event can be confirmed once the Safety Officer has approved it, every venue ' +
-      'arrangement is approved and every equipment request has an outcome from Technical ' +
-      'Support.',
-  }
-
   it('confirms an event in safety review with every approval in, in the reply and the record', async () => {
     signInAs(HANA)
 
@@ -1056,5 +1057,46 @@ describe('SCRUM-49 mock: a rejection reaches the venue and equipment mocks (AC10
         "An equipment outcome can't be recorded for an event that is completed, cancelled or " +
         'rejected; this one is rejected.',
     })
+  })
+})
+
+describe('SCRUM-109 mock: a booking outside the event’s period holds it back at either gate', () => {
+  const APPROVED_BOOKED_OFF_DATE = 'EVR-PLAN0009'
+  const IN_REVIEW_BOOKED_OFF_DATE = 'EVR-PLAN0010'
+
+  it('refuses safety review, naming each active booking outside it with both periods', async () => {
+    signInAs(HANA)
+
+    const error = await refusal(sendToSafetyReview(APPROVED_BOOKED_OFF_DATE))
+
+    // 62 is withdrawn, so it isn't named; 63 is pending, so it is named for both reasons.
+    expect(error).toMatchObject(SAFETY_REVIEW_NOT_READY)
+    expect(fieldErrorsOf(error)).toEqual({
+      venue_arrangements: [
+        'Venue arrangement 63 is pending.',
+        'Venue arrangement 60 is for 2026-11-19 10:00 to 2026-11-19 16:00, outside the ' +
+          "event's 2026-11-20 10:00 to 2026-11-20 16:00.",
+        'Venue arrangement 63 is for 2026-11-21 13:00 to 2026-11-21 15:00, outside the ' +
+          "event's 2026-11-20 10:00 to 2026-11-20 16:00.",
+      ],
+    })
+    expect(await statusOf(APPROVED_BOOKED_OFF_DATE)).toBe('approved')
+  })
+
+  it('refuses confirmation for the same reason, after the flag on the same booking', async () => {
+    signInAs(HANA)
+
+    const error = await refusal(confirmEvent(IN_REVIEW_BOOKED_OFF_DATE))
+
+    expect(error).toMatchObject(CONFIRMATION_NOT_READY)
+    expect(fieldErrorsOf(error)).toEqual({
+      venue_arrangements: [
+        "Venue arrangement 61 is flagged (requires reconfirmation): The event's date or time " +
+          'changed.',
+        'Venue arrangement 61 is for 2026-11-26 09:00 to 2026-11-26 12:00, outside the ' +
+          "event's 2026-11-27 10:00 to 2026-11-27 16:00.",
+      ],
+    })
+    expect(await statusOf(IN_REVIEW_BOOKED_OFF_DATE)).toBe('safety_review')
   })
 })

@@ -38,8 +38,9 @@ import { loadRejectionReason } from './eventReviewRules'
 const REQUEST_PATH = '/api/events/requests/:reference'
 const NOT_APPROVED_FOR_SAFETY_REVIEW_MESSAGE = 'Only an approved event can go to Safety Review.'
 const SAFETY_REVIEW_NOT_READY_MESSAGE =
-  'The event can go to Safety Review once every venue arrangement is approved and every ' +
-  'equipment request has an outcome from Technical Support.'
+  'The event can go to Safety Review once every venue arrangement is approved and booked ' +
+  "within the event's date and time, and every equipment request has an outcome from " +
+  'Technical Support.'
 const NO_VENUE_GAP = 'The event has no venue arranged.'
 const NOT_CONFIRMED_MESSAGE = 'Only a confirmed event can be marked completed.'
 const NOT_YET_ENDED_MESSAGE = 'The event has not ended yet.'
@@ -51,8 +52,8 @@ const CUT_OFF_NOT_BEFORE_START_MESSAGE = 'The withdrawal cut-off must be before 
 const NOT_IN_SAFETY_REVIEW_MESSAGE = 'Only an event in Safety Review can be confirmed.'
 const CONFIRMATION_NOT_READY_MESSAGE =
   'The event can be confirmed once the Safety Officer has approved it, every venue ' +
-  'arrangement is approved and every equipment request has an outcome from Technical ' +
-  'Support.'
+  "arrangement is approved and booked within the event's date and time, and every " +
+  'equipment request has an outcome from Technical Support.'
 const SAFETY_NOT_APPROVED_GAP = 'The Safety Officer has not approved the event.'
 const NOT_IN_PLANNING_FOR_REJECTION_MESSAGE =
   'Only an approved event or one in Safety Review can be rejected during planning.'
@@ -98,7 +99,8 @@ function planningOf(stored: MockEventRequest): MockPlanning {
 /**
  * Why the event's venues hold it back, as `_venue_gaps` words it: no venue at all, or each
  * active arrangement (a withdrawn or released one is retired) that isn't approved, with its status, then each
- * reason a significant change flagged one (SCRUM-33 AC6, SCRUM-58 AC3).
+ * reason a significant change flagged one (SCRUM-33 AC6, SCRUM-58 AC3), then each one booked
+ * outside the event's period, with both periods (SCRUM-109).
  */
 function venueGaps(planning: MockPlanning): string[] {
   const active = planning.arrangements.filter(
@@ -115,6 +117,15 @@ function venueGaps(planning: MockPlanning): string[] {
   }
   for (const arrangement of active) {
     gaps.push(...flaggedGaps(arrangement.id, arrangement.reassessmentFlags))
+  }
+  for (const arrangement of active) {
+    if (arrangement.outsideEvent !== undefined) {
+      const { bookedFor, eventPeriod } = arrangement.outsideEvent
+      gaps.push(
+        `Venue arrangement ${arrangement.id} is for ${bookedFor}, outside the event's ` +
+          `${eventPeriod}.`,
+      )
+    }
   }
   return gaps
 }
