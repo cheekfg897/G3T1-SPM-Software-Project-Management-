@@ -1,0 +1,65 @@
+@startuml
+title Sequence diagram: Venue Staff decide a booking request
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API and PostgreSQL are numbered, as in the
+' draw.io and PDF versions.
+' A notification is a record saved in PostgreSQL. Nothing is pushed to its recipient
+' (no email, websocket or polling): the Web App fetches it later with
+' GET /api/notifications, as the last section shows.
+
+actor "Event\nCoordinator" as coordinator
+actor "Venue\nStaff" as venue
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Venue Staff decide a booking request ==
+venue -> web : Open the queue
+autonumber
+web -> api : GET /api/venues/booking-requests
+api --> web : Requests waiting for a decision
+autonumber stop
+web --> venue : Show the requests
+
+alt Venue Staff approve
+  venue -> web : Approve
+  autonumber resume
+  web -> api : POST /api/venues/booking-requests/:id/decision
+  api -> db : Request approved:\npending: a new booking;\non hold: the hold is confirmed
+  api -> db : Pending requests that clash\nat the venue become conflicting
+  api -> db : Save notification: coordinator
+  api --> web : The approved request
+  autonumber stop
+  web --> venue : Show the result
+else Venue Staff reject
+  venue -> web : Reject
+  autonumber resume
+  web -> api : POST /api/venues/booking-requests/:id/decision
+  api -> db : Request rejected with its reason
+  api -> db : Save notification: coordinator
+  api --> web : The rejected request, with its reason
+  autonumber stop
+  web --> venue : Show the result
+else Venue Staff hold: events with more than one venue
+  venue -> web : Hold the venue
+  autonumber resume
+  web -> api : POST /api/venues/booking-requests/:id/hold
+  api -> db : Request on_hold, tentative\nbooking with an expiry
+  api -> db : Save notification: coordinator
+  api --> web : The request, on hold until its expiry
+  autonumber stop
+  web --> venue : Show the result
+end
+
+== Later, the Web App fetches the coordinator's saved notifications (nothing is pushed) ==
+coordinator -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : The venue decision and its detail
+autonumber stop
+web --> coordinator : Show notifications
+@enduml

@@ -1,0 +1,51 @@
+@startuml
+title Sequence diagram: find a venue and request a booking
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API and PostgreSQL are numbered, as in the
+' draw.io and PDF versions.
+' A notification is a record saved in PostgreSQL. Nothing is pushed to its recipient
+' (no email, websocket or polling): the Web App fetches it later with
+' GET /api/notifications, as the last section shows.
+
+actor "Event\nCoordinator" as coordinator
+actor "Venue\nStaff" as venue
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Find a venue and request a booking (the event must already be Approved) ==
+coordinator -> web : Search venues
+autonumber
+web -> api : POST /api/venues/search
+api --> web : The venues that match and are free
+autonumber stop
+web --> coordinator : Show the venues
+
+coordinator -> web : Check suitability
+autonumber resume
+web -> api : POST /api/venues/:id/suitability
+api --> web : Suitable, or what is missing
+autonumber stop
+web --> coordinator : Show the result
+
+coordinator -> web : Request a venue booking
+autonumber resume
+web -> api : POST /api/venues/events/:reference/booking-requests
+api -> db : Insert booking request (pending)
+api -> db : Save notification:\nall Venue Staff
+api --> web : The new request (pending)
+autonumber stop
+web --> coordinator : Show the request
+
+== Later, the Web App fetches Venue Staff's saved notifications (nothing is pushed) ==
+venue -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : A venue booking request awaits a decision
+autonumber stop
+web --> venue : Show notifications
+@enduml

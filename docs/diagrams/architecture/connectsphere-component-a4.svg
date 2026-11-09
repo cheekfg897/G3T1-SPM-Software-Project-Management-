@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 794 1123" font-family="'Segoe UI', Arial, Helvetica, sans-serif">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#707070"/></marker></defs>
+<rect width="794" height="1123" fill="#fff"/>
+<text x="12" y="30" font-size="18" fill="#222222" font-weight="700">Component diagram: ConnectSphere Backend API</text>
+<rect x="4" y="466" width="116" height="156" rx="8" fill="#f3f4f6" stroke="#9ca3af" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="62.0" y="484" font-size="10.5" fill="#374151" text-anchor="middle" font-weight="700">From the</text>
+<text x="62.0" y="496" font-size="10.5" fill="#374151" text-anchor="middle" font-weight="700">command line</text>
+<rect x="146" y="172" width="632" height="778" rx="6" fill="none" stroke="#444444" stroke-width="1.5" stroke-dasharray="8 6"/>
+<text x="162" y="940" font-size="12.5" fill="#444444" font-weight="700">Backend API  [Container: Python 3.12, Flask 3.1]</text>
+<rect x="10" y="508" width="104" height="100" rx="8" fill="#2f6db5" stroke="#1f4f86" stroke-width="1.5"/>
+<text x="62.0" y="528" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">Hold-expiry job</text>
+<text x="62.0" y="540" font-size="10" fill="#ffffff" text-anchor="middle">[Flask CLI:</text>
+<text x="62.0" y="552" font-size="10" fill="#ffffff" text-anchor="middle">flask expire-holds]</text>
+<text x="62.0" y="568" font-size="10.5" fill="#ffffff" text-anchor="middle">Expires holds and</text>
+<text x="62.0" y="581" font-size="10.5" fill="#ffffff" text-anchor="middle">warns coordinators</text>
+<rect x="558" y="44" width="200" height="92" rx="8" fill="#2f6db5" stroke="#1f4f86" stroke-width="1.5"/>
+<text x="658.0" y="64" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">Web App</text>
+<text x="658.0" y="76" font-size="10" fill="#ffffff" text-anchor="middle">[React, TypeScript, Vite,</text>
+<text x="658.0" y="88" font-size="10" fill="#ffffff" text-anchor="middle">Tailwind CSS]</text>
+<text x="658.0" y="104" font-size="10.5" fill="#ffffff" text-anchor="middle">Single-page app that runs</text>
+<text x="658.0" y="117" font-size="10.5" fill="#ffffff" text-anchor="middle">in the user&#x27;s browser</text>
+<rect x="198" y="216" width="128" height="112" rx="8" fill="#85bbf0" stroke="#5b9bd5" stroke-width="1.5"/>
+<text x="262.0" y="236" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">auth</text>
+<text x="262.0" y="248" font-size="10" fill="#0b1f33" text-anchor="middle">[/api/auth]</text>
+<text x="262.0" y="264" font-size="10.5" fill="#0b1f33" text-anchor="middle">Login, JWT, sign-up,</text>
+<text x="262.0" y="277" font-size="10.5" fill="#0b1f33" text-anchor="middle">role names and user</text>
+<text x="262.0" y="290" font-size="10.5" fill="#0b1f33" text-anchor="middle">lookups, used by</text>
+<text x="262.0" y="303" font-size="10.5" fill="#0b1f33" text-anchor="middle">every module.</text>
+<rect x="412" y="216" width="128" height="112" rx="8" fill="#85bbf0" stroke="#5b9bd5" stroke-width="1.5"/>
+<text x="476.0" y="236" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">organisations</text>
+<text x="476.0" y="248" font-size="10" fill="#0b1f33" text-anchor="middle">[/api/organisations]</text>
+<text x="476.0" y="264" font-size="10.5" fill="#0b1f33" text-anchor="middle">Client-organisation</text>
+<text x="476.0" y="277" font-size="10.5" fill="#0b1f33" text-anchor="middle">catalogue.</text>
+<rect x="412" y="358" width="128" height="112" rx="8" fill="#85bbf0" stroke="#5b9bd5" stroke-width="1.5"/>
+<text x="476.0" y="378" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">equipment</text>
+<text x="476.0" y="390" font-size="10" fill="#0b1f33" text-anchor="middle">[/api/equipment]</text>
+<text x="476.0" y="406" font-size="10.5" fill="#0b1f33" text-anchor="middle">Equipment catalogue,</text>
+<text x="476.0" y="419" font-size="10.5" fill="#0b1f33" text-anchor="middle">availability,</text>
+<text x="476.0" y="432" font-size="10.5" fill="#0b1f33" text-anchor="middle">reservations and</text>
+<text x="476.0" y="445" font-size="10.5" fill="#0b1f33" text-anchor="middle">out-of-service units.</text>
+<rect x="198" y="500" width="128" height="112" rx="8" fill="#85bbf0" stroke="#5b9bd5" stroke-width="1.5"/>
+<text x="262.0" y="520" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">venue</text>
+<text x="262.0" y="532" font-size="10" fill="#0b1f33" text-anchor="middle">[/api/venues]</text>
+<text x="262.0" y="548" font-size="10.5" fill="#0b1f33" text-anchor="middle">Venues, search,</text>
+<text x="262.0" y="561" font-size="10.5" fill="#0b1f33" text-anchor="middle">booking requests,</text>
+<text x="262.0" y="574" font-size="10.5" fill="#0b1f33" text-anchor="middle">holds, approvals,</text>
+<text x="262.0" y="587" font-size="10.5" fill="#0b1f33" text-anchor="middle">preparation, calendar.</text>
+<rect x="412" y="500" width="128" height="112" rx="8" fill="#85bbf0" stroke="#5b9bd5" stroke-width="1.5"/>
+<text x="476.0" y="520" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">registration</text>
+<text x="476.0" y="532" font-size="10" fill="#0b1f33" text-anchor="middle">[/api/events]</text>
+<text x="476.0" y="548" font-size="10.5" fill="#0b1f33" text-anchor="middle">Attendee catalogue,</text>
+<text x="476.0" y="561" font-size="10.5" fill="#0b1f33" text-anchor="middle">register and withdraw,</text>
+<text x="476.0" y="574" font-size="10.5" fill="#0b1f33" text-anchor="middle">registrant lists.</text>
+<rect x="626" y="500" width="128" height="112" rx="8" fill="#85bbf0" stroke="#5b9bd5" stroke-width="1.5"/>
+<text x="690.0" y="520" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">events</text>
+<text x="690.0" y="532" font-size="10" fill="#0b1f33" text-anchor="middle">[/api/events]</text>
+<text x="690.0" y="548" font-size="10.5" fill="#0b1f33" text-anchor="middle">Event-request</text>
+<text x="690.0" y="561" font-size="10.5" fill="#0b1f33" text-anchor="middle">lifecycle: submit,</text>
+<text x="690.0" y="574" font-size="10.5" fill="#0b1f33" text-anchor="middle">assign, review,</text>
+<text x="690.0" y="587" font-size="10.5" fill="#0b1f33" text-anchor="middle">safety review, confirm.</text>
+<text x="690.0" y="600" font-size="10.5" fill="#0b1f33" text-anchor="middle">The hub: calls most.</text>
+<rect x="412" y="642" width="128" height="112" rx="8" fill="#85bbf0" stroke="#5b9bd5" stroke-width="1.5"/>
+<text x="476.0" y="662" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">notifications</text>
+<text x="476.0" y="674" font-size="10" fill="#0b1f33" text-anchor="middle">[/api/notifications]</text>
+<text x="476.0" y="690" font-size="10.5" fill="#0b1f33" text-anchor="middle">Saved notification</text>
+<text x="476.0" y="703" font-size="10.5" fill="#0b1f33" text-anchor="middle">records: list,</text>
+<text x="476.0" y="716" font-size="10.5" fill="#0b1f33" text-anchor="middle">unread count,</text>
+<text x="476.0" y="729" font-size="10.5" fill="#0b1f33" text-anchor="middle">mark read.</text>
+<rect x="160" y="822" width="400" height="84" rx="8" fill="#c9def2" stroke="#8db3d9" stroke-width="1.5"/>
+<text x="360.0" y="842" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">Shared kernel</text>
+<text x="360.0" y="854" font-size="10" fill="#0b1f33" text-anchor="middle">[app/common]</text>
+<text x="360.0" y="870" font-size="10.5" fill="#0b1f33" text-anchor="middle">Error shape · @requires_auth / @requires_role · marshmallow validation</text>
+<text x="360.0" y="883" font-size="10.5" fill="#0b1f33" text-anchor="middle">business-timezone clock · DB session helpers · /health · shared</text>
+<text x="360.0" y="896" font-size="10.5" fill="#0b1f33" text-anchor="middle">preparation rules. Used by every module; imports nothing from them.</text>
+<rect x="572" y="822" width="188" height="84" rx="8" fill="#c9def2" stroke="#8db3d9" stroke-width="1.5"/>
+<text x="666.0" y="842" font-size="12" fill="#0b1f33" text-anchor="middle" font-weight="700">App factory</text>
+<text x="666.0" y="854" font-size="10" fill="#0b1f33" text-anchor="middle">[create_app + extensions]</text>
+<text x="666.0" y="870" font-size="10.5" fill="#0b1f33" text-anchor="middle">Builds the Flask app, binds</text>
+<text x="666.0" y="883" font-size="10.5" fill="#0b1f33" text-anchor="middle">SQLAlchemy, JWT, Migrate,</text>
+<text x="666.0" y="896" font-size="10.5" fill="#0b1f33" text-anchor="middle">registers every module.</text>
+<path d="M365,998 v57 a97.0,14 0 0 0 194,0 v-57 a97.0,14 0 0 0 -194,0 z" fill="#2f6db5" stroke="#1f4f86" stroke-width="1.5"/>
+<path d="M365,998 a97.0,14 0 0 0 194,0" fill="none" stroke="#1f4f86" stroke-width="1.5"/>
+<text x="462.0" y="1024" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="700">Database</text>
+<text x="462.0" y="1036" font-size="10" fill="#ffffff" text-anchor="middle">[PostgreSQL 16]</text>
+<text x="462.0" y="1052" font-size="10.5" fill="#ffffff" text-anchor="middle">Every module&#x27;s tables</text>
+<polyline points="114,556 198,556" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="156.0" y="531.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Expires holds,</text>
+<text x="156.0" y="544.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">sends warnings</text>
+<polyline points="658,136 658,172" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="578" y="151.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Calls each module&#x27;s routes</text>
+<text x="578" y="164.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">[JSON over HTTP, Bearer JWT]</text>
+<polyline points="462,950 462,984" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="528" y="964.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Reads and writes</text>
+<text x="528" y="977.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">[SQLAlchemy, psycopg2]</text>
+<polyline points="326,272 412,272" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="369.0" y="247.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Looks up the</text>
+<text x="369.0" y="260.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">organisation</text>
+<polyline points="412,414 326,530" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="369.0" y="469.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Reads venue</text>
+<text x="369.0" y="482.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">details</text>
+<polyline points="412,556 326,556" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="369.0" y="536.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Lists booked</text>
+<text x="369.0" y="549.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">venues</text>
+<polyline points="326,582 412,698" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="369.0" y="637.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Saves</text>
+<text x="369.0" y="650.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">notifications</text>
+<polyline points="626,530 540,414" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="583.0" y="469.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Reservations,</text>
+<text x="583.0" y="482.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">equipment need</text>
+<polyline points="626,556 540,556" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="583.0" y="536.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Registrations,</text>
+<text x="583.0" y="549.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">and events</text>
+<polyline points="626,582 540,698" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)"/>
+<text x="583.0" y="637.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Saves</text>
+<text x="583.0" y="650.5" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">notifications</text>
+<polyline points="262.0,612 262.0,792 690.0,792 690.0,612" fill="none" stroke="#707070" stroke-width="1.5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+<text x="476.0" y="796.0" text-anchor="middle" font-size="10.5" fill="#333333" stroke="#fff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Arrangements and the event record</text>
+<text x="12" y="996" font-size="10" fill="#6b7280" >Arrow A → B: A calls B&#x27;s service functions,</text>
+<text x="12" y="1009" font-size="10" fill="#6b7280" >in the same process (no network hop).</text>
+<text x="12" y="1022" font-size="10" fill="#6b7280" >Not drawn: every module&#x27;s calls into auth</text>
+<text x="12" y="1035" font-size="10" fill="#6b7280" >(roles, user lookups) and the shared kernel.</text>
+<rect x="584" y="990" width="16" height="13" rx="3" fill="#2f6db5" stroke="#1f4f86"/>
+<text x="608" y="1001" font-size="10" fill="#374151" >Container (outside this diagram)</text>
+<rect x="584" y="1012" width="16" height="13" rx="3" fill="#85bbf0" stroke="#5b9bd5"/>
+<text x="608" y="1023" font-size="10" fill="#374151" >Component: one module</text>
+<rect x="584" y="1034" width="16" height="13" rx="3" fill="#c9def2" stroke="#8db3d9"/>
+<text x="608" y="1045" font-size="10" fill="#374151" >Supporting component</text>
+</svg>

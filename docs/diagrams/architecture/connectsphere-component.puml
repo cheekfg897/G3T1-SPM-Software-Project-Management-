@@ -1,0 +1,57 @@
+@startuml
+!include <C4/C4_Component>
+
+LAYOUT_WITH_LEGEND()
+SHOW_PERSON_OUTLINE()
+title Component diagram: ConnectSphere Backend API
+
+' Zooms into the Backend API container of the container diagram. The components are the
+' modules: each is a Flask blueprint with routes, services, schemas and models, and
+' modules only call each other's service functions, in the same process.
+' The Web App reaches the Backend API over HTTP. The Hold-expiry job reaches it from the
+' command line, so it is grouped apart from the Web App.
+' Not drawn: every module's calls into auth (roles, user lookups) and into the shared
+' kernel, which would add about eight arrows that carry no information.
+
+Container_Ext(web, "Web App", "React, TypeScript, Vite, Tailwind CSS", "Single-page app that runs in the user's browser")
+ContainerDb_Ext(db, "Database", "PostgreSQL 16", "Every module's tables")
+
+Boundary(cli, "From the command line") {
+  Container_Ext(job, "Hold-expiry job", "Flask CLI: flask expire-holds", "Expires holds and warns coordinators")
+}
+
+Container_Boundary(api, "Backend API") {
+  Component(auth, "auth", "/api/auth", "Login, JWT, sign-up, role names and user lookups, used by every module")
+  Component(organisations, "organisations", "/api/organisations", "Client-organisation catalogue")
+  Component(equipment, "equipment", "/api/equipment", "Equipment catalogue, availability, reservations and out-of-service units")
+  Component(venue, "venue", "/api/venues", "Venues, search, booking requests, holds, approvals, preparation, calendar")
+  Component(registration, "registration", "/api/events", "Attendee catalogue, register and withdraw, registrant lists")
+  Component(events, "events", "/api/events", "Event-request lifecycle: submit, assign, review, safety review, confirm. The hub: calls most modules")
+  Component(notifications, "notifications", "/api/notifications", "Saved notification records: list, unread count, mark read")
+  Component(kernel, "Shared kernel", "app/common", "Error shape, @requires_auth / @requires_role, marshmallow validation, business-timezone clock, DB session helpers, /health, shared preparation rules. Used by every module; imports nothing from them")
+  Component(factory, "App factory", "create_app + extensions", "Builds the Flask app, binds SQLAlchemy, JWT and Migrate, registers every module")
+}
+
+Rel_D(web, api, "Calls each module's routes", "JSON over HTTP, Bearer JWT")
+Rel_R(job, venue, "Expires holds, sends warnings")
+Rel_D(api, db, "Reads and writes", "SQLAlchemy, psycopg2")
+
+Rel_R(auth, organisations, "Looks up the organisation")
+Rel(equipment, venue, "Reads venue details")
+Rel(registration, venue, "Lists booked venues")
+Rel(venue, notifications, "Saves notifications")
+BiRel(events, equipment, "Reservations, equipment need")
+BiRel(events, registration, "Registrations, and events")
+Rel(events, notifications, "Saves notifications")
+BiRel(venue, events, "Arrangements and the event record")
+
+' Hidden links keep venue on the left, events on the right, and the three modules both
+' of them call (equipment, registration, notifications) stacked between them.
+Lay_D(auth, venue)
+Lay_R(venue, registration)
+Lay_R(registration, events)
+Lay_D(equipment, registration)
+Lay_D(registration, notifications)
+Lay_D(venue, kernel)
+Lay_R(kernel, factory)
+@enduml

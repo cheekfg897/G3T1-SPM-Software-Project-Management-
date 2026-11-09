@@ -1,0 +1,50 @@
+@startuml
+title Sequence diagram: coordinator decides the request
+hide footbox
+skinparam sequenceMessageAlign center
+
+' People work in the Web App, which calls the Backend API with their login token, so
+' every call and its answer is two arrows: person <-> Web App, Web App <-> Backend API.
+' Only the arrows to and from the Backend API and PostgreSQL are numbered, as in the
+' draw.io and PDF versions.
+' Approved: the coordinator accepts the request so planning can start. The event is
+' confirmed later, after the Safety Review (the customer's "event approved").
+' A request awaiting clarification can only be rejected, not approved.
+
+actor "Event\nCoordinator" as coordinator
+actor "Event\nOrganiser" as organiser
+participant "Web App\n(React)" as web
+participant "Backend API" as api
+database "PostgreSQL" as db
+
+== Coordinator decides the request (submitted or under review; a reason to reject) ==
+alt Approved: the request may go on to planning
+  coordinator -> web : Approve
+  autonumber
+  web -> api : POST /api/events/requests/:reference/decide
+  api -> db : Status becomes approved,\nadd a decision entry
+  api -> db : Save notification: organiser
+  api --> web : The request, now approved
+  autonumber stop
+  web --> coordinator : Show the request
+else Rejected: a reason is required
+  coordinator -> web : Reject, with a reason
+  autonumber resume
+  web -> api : POST /api/events/requests/:reference/decide
+  api -> db : Status becomes rejected, add\ndecision entry (with the reason)
+  api -> db : Save notification: organiser,\nwith the reason
+  api --> web : The request, now rejected
+  autonumber stop
+  web --> coordinator : Show the request
+end
+
+== Later, the Web App fetches the organiser's saved notifications (nothing is pushed) ==
+organiser -> web : Open notifications
+autonumber resume
+web -> api : GET /api/notifications
+api --> web : Your request was approved or rejected, with the reason
+autonumber stop
+web --> organiser : Show notifications
+
+== Next: planning starts toward Confirmed (venues and equipment, Safety Review, then confirm) ==
+@enduml

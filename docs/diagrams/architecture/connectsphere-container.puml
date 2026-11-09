@@ -1,0 +1,29 @@
+@startuml
+!include <C4/C4_Container>
+
+LAYOUT_WITH_LEGEND()
+SHOW_PERSON_OUTLINE()
+title Container diagram: ConnectSphere
+
+Person_Ext(organiser, "Event Organiser", "Client representative who signs up themselves")
+Person_Ext(attendee, "Attendee", "Member of the public who signs up themselves")
+Person(staff, "ConnectSphere staff", "The five staff roles, created by CLI command")
+
+System_Boundary(cs, "ConnectSphere") {
+  Container(web, "Web App", "React, TypeScript, Vite, Tailwind CSS", "Single-page app that runs in the user's browser")
+  Container(api, "Backend API", "Python 3.12, Flask 3.1", "Modular monolith: REST/JSON under /api. Login, role checks, validation and business rules")
+  ContainerDb(db, "Database", "PostgreSQL 16", "Users, organisations, events and history, venues, bookings, equipment, registrations, notifications")
+  Container(job, "Hold-expiry job", "Flask CLI: flask expire-holds", "Expires tentative holds and warns coordinators 24 hours before expiry. Run hourly by a GitHub Actions schedule; safe to re-run")
+}
+
+Rel_D(organiser, web, "Submits requests, answers clarifications", "HTTPS")
+Rel_D(attendee, web, "Browses events, registers, withdraws", "HTTPS")
+Rel_D(staff, web, "Reviews, assigns and arranges events", "HTTPS")
+Rel_D(web, api, "Calls", "JSON over HTTP, Bearer JWT")
+Rel_D(api, db, "Reads and writes", "SQLAlchemy, psycopg2")
+Rel_U(job, db, "Marks holds Expired, writes history and notifications", "SQLAlchemy, psycopg2")
+
+' Hidden links keep the three people side by side, in this order.
+Lay_R(organiser, attendee)
+Lay_R(attendee, staff)
+@enduml

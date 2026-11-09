@@ -1,0 +1,49 @@
+@startuml
+title Sequence diagram: coordinator rejects an event during planning
+hide footbox
+skinparam sequenceMessageAlign center
+
+' The coordinator works in the Web App, which calls the Backend API with their login
+' token, so the call and its answer are two arrows each: person <-> Web App, then
+' Web App <-> the Backend API. This page looks inside the Backend API, so its
+' modules are lifelines. Only the arrows between the Web App, the modules and
+' PostgreSQL are numbered, as in the draw.io and PDF versions.
+' It is a modular monolith: an arrow between two modules is a call to the other
+' module's service function, in the same process (no network hop). The status change,
+' the releases and the returned equipment share one database session and are saved in
+' one commit; the notifications are saved after it, written by the notifications
+' module. A notification is only a record in PostgreSQL: nothing is pushed to its
+' recipient, who fetches it later (see the who-is-told page).
+
+actor "Event\nCoordinator" as coordinator
+participant "Web App\n(React)" as web
+participant "events\nmodule" as events
+participant "venue\nmodule" as venue
+participant "notifications\nmodule" as notifications
+participant "equipment\nmodule" as equipment
+database "PostgreSQL" as db
+
+== Reject an event during planning (it must be Approved or in Safety Review; a reason is required) ==
+coordinator -> web : Reject, with a reason
+autonumber
+web -> events : POST /api/events/requests/:reference/reject
+events -> db : Check: Approved or in Safety Review,\nno pending change request
+group Saved together, in one commit
+  events -> db : Status becomes rejected, add\ndecision entry (with the reason)
+  events -> venue : release_event_arrangements
+  venue -> db : Withdraw pending, conflicting,\nrejected or expired requests
+  venue -> db : Release approved and on_hold\nrequests, cancel their bookings
+  events -> equipment : release_event_reservations
+  equipment -> db : Return reserved equipment
+end
+
+== After the commit: the notifications are saved ==
+events -> notifications : notify_users\n(the organiser, with the reason)
+notifications -> db : Save notification: organiser,\nwith the reason
+events -> venue : tell_venue_staff_of_releases
+venue -> notifications : notify_users,\nonce per release
+notifications -> db : Save one booking_released notice\nper release, for every Venue Staff user
+events --> web : The request, now rejected
+autonumber stop
+web --> coordinator : Show the request
+@enduml
