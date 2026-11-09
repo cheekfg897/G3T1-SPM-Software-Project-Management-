@@ -96,6 +96,10 @@ MESSAGE_BY_KIND: dict[NotificationKind, str] = {
     NotificationKind.CHANGE_REQUEST_APPROVED: "Your change request was approved.",
     NotificationKind.CHANGE_REQUEST_REJECTED: "Your change request was rejected.",
     NotificationKind.EVENT_RESCHEDULED: "An event you registered for has a new date or time.",
+    NotificationKind.EVENT_CANCELLED: "This event has been cancelled by its organiser.",
+    NotificationKind.VENUE_BOOKING_RELEASED_BY_CANCELLATION: (
+        "A venue booking or hold was released because its event was cancelled."
+    ),
 }
 
 #: Where a notification links to: the event's page, found by its reference

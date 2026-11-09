@@ -66,17 +66,17 @@ def test_it_adds_the_models_new_kinds_and_follows_scrum_70(load_migration: LoadM
     assert len(migration.revision) <= 32
 
 
-def test_with_the_kinds_added_the_type_holds_exactly_the_models_kinds(
+def test_with_the_kinds_added_the_type_holds_only_the_models_kinds(
     load_migration: LoadMigration,
 ) -> None:
-    """The newest migration to change ``notification_kind`` leaves no kind out."""
     migration = load_migration(MIGRATION)
     notification_kinds = {
         *migration.PREVIOUS_NOTIFICATION_KIND_VALUES,
         *migration.ADDED_NOTIFICATION_KIND_VALUES,
     }
 
-    assert notification_kinds == {kind.value for kind in NotificationKind}
+    # Subset, not equality: a later migration (0057, SCRUM-61) adds further kinds.
+    assert notification_kinds <= {kind.value for kind in NotificationKind}
 
 
 def test_upgrade_adds_the_decision_columns_and_checks_then_the_kinds(
